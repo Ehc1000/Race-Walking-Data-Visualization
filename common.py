@@ -6,7 +6,6 @@ import pandas as pd
 def df_from_query(query_file, db_file):
     with open(f'sql/{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
-    conn = sql.connect(db_file)
-    df = pd.read_sql_query(sql_query, conn)
-    conn.close()
+    with sql.connect(db_file) as conn:
+        df = pd.read_sql_query(sql_query, conn)
     return df

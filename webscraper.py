@@ -8,7 +8,7 @@ webscraper_bp = Blueprint('webscraper', __name__)
 # and then forget you're even using flask, if you want.
 
 @webscraper_bp.route('/')
-def graphs():
+def web_scraper():
     return 'Main page for what will be the web scraper section!'
 
 # We can also treat this file as a command line script and forget we are using flask.
