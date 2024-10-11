@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Page!</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
+    {# Using this url_for code to get the path out of habit but you can just hardcode it. But url_for
+    is good just so things aren't hardcoded and can be used for a lot of things.'#}
+</head>
+<body>
+<h1>Here's the table baby!</h1>
+{{ table | safe }} {# This is passed in to the template when you call render_template! The safe keyword is so
+it properly renders as actual html, and not just text. #}
+</body>
+</html>
