@@ -7,12 +7,12 @@ FROM (SELECT IDJudge, COUNT(BibNumber) AS MissedNumber, Color, Infraction
 FROM (SELECT RaceJudge.IDJudge, MajorityCalls.BibNumber, MajorityCalls.Color, MajorityCalls.Infraction
 FROM (SELECT JudgeCall.BibNumber, JudgeCall.IDRace, JudgeCall.Color, JudgeCall.Infraction
 FROM JudgeCall 
-WHERE JudgeCall.IDRace = 6
+WHERE JudgeCall.IDRace = ?
 GROUP BY JudgeCall.BibNumber, JudgeCall.IDRace, JudgeCall.Color, JudgeCall.Infraction
-HAVING (Count(JudgeCall.Infraction))>=(SELECT COUNT(IDJudge)/2 FROM RaceJudge WHERE RaceJudge.IDRace=6)) MajorityCalls, RaceJudge
-WHERE RaceJudge.IDRace=6
+HAVING (Count(JudgeCall.Infraction))>=(SELECT COUNT(IDJudge)/2 FROM RaceJudge WHERE RaceJudge.IDRace=?)) MajorityCalls, RaceJudge
+WHERE RaceJudge.IDRace=?
 EXCEPT
-SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall WHERE IDRace=6)
+SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall WHERE IDRace=?)
 GROUP BY IDJudge, Color, Infraction) MissedCalls
 LEFT JOIN Judge ON Judge.IDJudge = MissedCalls.IDJudge
 GROUP BY MissedCalls.IDJudge

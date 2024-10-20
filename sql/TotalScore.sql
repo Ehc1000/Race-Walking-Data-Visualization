@@ -9,12 +9,12 @@ FROM
 --- Excessive Red Cards
 (SELECT Judge.FirstName, Judge.LastName, JC.IDJudge, COUNT(JC.BibNumber ) AS ExcessiveRedCards
 FROM JudgeCall JC INNER JOIN Judge ON JC.IDJudge = Judge.IDJudge  
-WHERE JC.Color = "Red" AND JC.IDRace=6
+WHERE JC.Color = "Red" AND JC.IDRace=?
 AND JC.BibNumber NOT IN 
-    (SELECT VO.BibNumber FROM VideoObservation VO WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=6
+    (SELECT VO.BibNumber FROM VideoObservation VO WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1)
 AND JC.BibNumber NOT IN 
-(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=6
+(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1)
 GROUP BY JC.IDJudge
@@ -24,12 +24,12 @@ LEFT JOIN
 
 ---Judges Matching the Video Observations
 (SELECT J.FirstName, J.LastName, J.IDJudge, COUNT(BibNumber) AS CorrectRedCards FROM Judge J INNER JOIN 
-(SELECT JC.IDJudge, JC.BibNumber FROM JudgeCall JC WHERE JC.IDRace=6 AND JC.Color="Red" AND JC.Infraction="<" AND JC.BibNumber IN
-(SELECT VO.BibNumber FROM VideoObservation VO WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=6
+(SELECT JC.IDJudge, JC.BibNumber FROM JudgeCall JC WHERE JC.IDRace=? AND JC.Color="Red" AND JC.Infraction="<" AND JC.BibNumber IN
+(SELECT VO.BibNumber FROM VideoObservation VO WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1)
      UNION
-SELECT JC.IDJudge, JC.BibNumber FROM JudgeCall JC WHERE JC.IDRace=6 AND JC.Color="Red" AND JC.Infraction="~" AND JC.BibNumber IN
-(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=6
+SELECT JC.IDJudge, JC.BibNumber FROM JudgeCall JC WHERE JC.IDRace=? AND JC.Color="Red" AND JC.Infraction="~" AND JC.BibNumber IN
+(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1)) InnerDetails ON J.IDJudge=InnerDetails.IDJudge
 GROUP BY InnerDetails.IDJudge
@@ -45,16 +45,16 @@ MAX(CASE WHEN Infraction='<' AND Color='Red' THEN MissedNumber ELSE 0 END) Misse
 FROM (SELECT IDJudge, COUNT(BibNumber) AS MissedNumber, Color, Infraction
 FROM (SELECT RaceJudge.IDJudge, CorrectCalls.BibNumber, CorrectCalls.Color, CorrectCalls.Infraction
 FROM (SELECT VO.BibNumber, VO.IDRace, "Red" AS Color, "<" AS Infraction FROM VideoObservation VO 
-WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=6
+WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber, VO.IDRace, "Red" AS Color, "~" AS Infraction FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=6
+WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1) CorrectCalls, RaceJudge
-WHERE RaceJudge.IDRace=6
+WHERE RaceJudge.IDRace=?
 EXCEPT
-SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall WHERE IDRace=6)
+SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall WHERE IDRace=?)
 GROUP BY IDJudge, Color, Infraction) MissedCalls
 LEFT JOIN Judge ON Judge.IDJudge = MissedCalls.IDJudge
 GROUP BY MissedCalls.IDJudge
@@ -71,16 +71,16 @@ FROM (
 
 SELECT RaceJudge.IDJudge, CorrectCalls.BibNumber, CorrectCalls.Color, CorrectCalls.Infraction FROM 
 (SELECT VO.BibNumber, VO.IDRace, "Red" AS Color, "<" AS Infraction FROM VideoObservation VO 
-WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=6
+WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber, VO.IDRace, "Red" AS Color, "~" AS Infraction FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=6
+WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1) CorrectCalls, RaceJudge
-WHERE RaceJudge.IDRace=6) VideoCalls
+WHERE RaceJudge.IDRace=?) VideoCalls
 INNER JOIN 
-(SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall  WHERE IDRace=6 AND Color="Red") ActualJudgeCalls 
+(SELECT IDJudge, BibNumber, Color, Infraction FROM JudgeCall  WHERE IDRace=? AND Color="Red") ActualJudgeCalls 
 ON VideoCalls.BibNumber=ActualJudgeCalls.BibNumber 
 WHERE ActualJudgeCalls.Infraction <> VideoCalls.Infraction
 GROUP BY ActualJudgeCalls.IDJudge, ActualJudgeCalls.BibNumber) Discrepancies INNER JOIN Judge ON Discrepancies.IDJudge=Judge.IDJudge
@@ -93,21 +93,21 @@ LEFT JOIN
 
 -- Judge Non calls from the Video Observations
 (SELECT J.FirstName, J.LastName, AllJudgesAllBib.IDJudge,Count(AllJudgesAllBib.BibNumber) AS NbrCorrectNonCalls FROM
-(SELECT BibNumber, IDJudge FROM Bib, RaceJudge WHERE Bib.IDRace=6 AND RaceJudge.IDRace=6) AllJudgesAllBib
+(SELECT BibNumber, IDJudge FROM Bib, RaceJudge WHERE Bib.IDRace=? AND RaceJudge.IDRace=?) AllJudgesAllBib
 INNER JOIN Judge J ON J.IDJudge=AllJudgesAllBib.IDJudge
 LEFT JOIN
-(SELECT BibNumber,IDJudge FROM JudgeCall WHERE IDRace=6 AND Color="Red") JudgeCalls
+(SELECT BibNumber,IDJudge FROM JudgeCall WHERE IDRace=? AND Color="Red") JudgeCalls
 ON AllJudgesAllBib.IDJudge=JudgeCalls.IDJudge AND AllJudgesAllBib.BibNumber=JudgeCalls.BibNumber
 WHERE JudgeCalls.IDJudge IS NULL AND AllJudgesAllBib.BibNumber IN
 ---Bibs of legal walkers in a race 
-(SELECT BibNumber FROM BIB WHERE IDRace=6 AND 
+(SELECT BibNumber FROM BIB WHERE IDRace=? AND 
 BibNumber NOT IN (
 SELECT VO.BibNumber FROM VideoObservation VO 
-WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=6
+WHERE KneeAngle > 0 AND KneeAngle <= 175 AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=6
+WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1))
 GROUP BY AllJudgesAllBib.IDJudge) FinalNoCalls

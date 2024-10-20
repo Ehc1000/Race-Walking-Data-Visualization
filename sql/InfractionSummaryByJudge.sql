@@ -7,9 +7,9 @@ FROM (SELECT Judge.FirstName, Judge.LastName, JudgeCall.Color, COUNT(JudgeCall.I
 FROM RACE INNER JOIN RaceJudge ON (Race.IDRace = RaceJudge.IDRace) 
 INNER JOIN Judge ON (RaceJudge.IDJudge = Judge.IDJudge) 
 INNER JOIN JudgeCall ON (RaceJudge.IDJudge = JudgeCall.IDJudge) AND (RaceJudge.IDRace = JudgeCall.IDRace)
-INNER JOIN Bib ON (JudgeCall.BibNumber = Bib.BibNumber AND Bib.IDRace=6) 
+INNER JOIN Bib ON (JudgeCall.BibNumber = Bib.BibNumber AND Bib.IDRace=?) 
 INNER JOIN Athlete ON (Athlete.IDAthlete = Bib.IDAthlete)
-WHERE (Race.idRace = 6 )
+WHERE (Race.IDRace = ? )
 GROUP BY JudgeCall.Color, JudgeCall.Infraction, Judge.IDJudge ) JudgeInfractionSummarySub 
 INNER JOIN Judge ON Judge.IDJudge = JudgeInfractionSummarySub.IDJudge
 GROUP BY Judge.idJudge, Judge.FirstName, Judge.LastName

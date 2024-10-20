@@ -10,7 +10,7 @@ INNER JOIN Bib B ON B.BibNumber = JC.BibNumber
 INNER JOIN Athlete A ON A.IDAthlete = B.IDAthlete
 LEFT JOIN 
 (SELECT Athlete.IDAThlete, LOCData.BibNumber, ROUND(AVG(LOCData.LOCAverage),1) AS LOCAverage, COUNT(LOCData.BibNumber) As NbrMeasurements, Athlete.LastName, Athlete.FirstName FROM (
-SELECT IDAthlete, BibNumber, LOCAverage, RANK() OVER (Partition by BibNumber Order by LOCAverage DESC) LOCRank FROM VideoObservation WHERE IDRace = 6) LOCData
+SELECT IDAthlete, BibNumber, LOCAverage, RANK() OVER (Partition by BibNumber Order by LOCAverage DESC) LOCRank FROM VideoObservation WHERE IDRace = ?) LOCData
 INNER JOIN Athlete ON Athlete.IDAthlete=LOCData.IDAthlete
 WHERE LOCData.LOCRank < 3 AND LOCData.LOCAverage >=0
 GROUP BY LOCData.BibNumber
@@ -19,10 +19,10 @@ ON VideoLOC.BibNumber = JC.BibNumber
 LEFT JOIN
 (SELECT Athlete.BibNumber, Round(avg(KneeAngle),1) as AverageKneeBend, COUNT(Athlete.BibNumber) AS NbrMeasurements, Athlete.FirstName, Athlete.LastName
 FROM VideoObservation INNER JOIN Athlete ON VideoObservation.IDAthlete =Athlete.IDAthlete
-WHERE IDRace=6 AND KneeAngle > 0 AND KneeAngle <=175
+WHERE IDRace=? AND KneeAngle > 0 AND KneeAngle <=175
 GROUP BY Athlete.BibNumber
 HAVING COUNT(Athlete.BibNumber) > 1) VideoBent
 ON VideoBent.BibNumber = JC.BibNumber
 
-WHERE JC.IDRace=6 AND JC.Color="Red"
+WHERE JC.IDRace=? AND JC.Color="Red"
 ORDER BY J.LastName, J.FirstName, A.LastName, A.FirstName, JC.Infraction
