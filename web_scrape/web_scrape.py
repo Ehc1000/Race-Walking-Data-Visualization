@@ -10,8 +10,6 @@ import constants as c
 import utils as u
 
 
-
-
 def set_up():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
@@ -26,10 +24,9 @@ def get_profile_image():
     try:
         img_element = driver.find_element(By.XPATH, "//img[@alt='Athlete']")
         img_url = img_element.get_attribute("src")
-        u.write(f"Image URL: {img_url}\n")
-        u.log(f"Image URL: {img_url}\n", level="info")
+        u.log(f"Image URL: {img_url}")
     except Exception as e:
-        u.log(f"Error finding image: {e}", level="error")
+        u.log(f"Error finding image: {e}", "error")
 
 def close_cookie_banner():
     try:
@@ -37,33 +34,52 @@ def close_cookie_banner():
             EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
         )
         cookie_button.click()
-        u.log("Successfully clicked the 'Allow all cookies' button.", level="info")
+        u.log("Successfully clicked the 'Allow all cookies' button.")
     except Exception as e:
-        u.log(f"Error closing cookie banner: {e}", level="error")
+        u.log(f"Error closing cookie banner: {e}", "error")
 
 def click_statistics_button():
     try:
         statistics_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()='STATISTICS']")))
         statistics_button.click()
-        u.log("Successfully clicked 'STATISTICS' button.", level="info")
+        u.log("Successfully clicked 'STATISTICS' button.")
     except Exception as e:
-        u.log(f"Error clicking 'STATISTICS' button: {e}", level="error")
+        u.log(f"Error clicking 'STATISTICS' button: {e}", "error")
 
 def get_world_rankings():
-    world_rankings_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()='World rankings']")))
-    world_rankings_button.click()
+    try:
+        world_rankings_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='World rankings']"))
+        )
+        world_rankings_button.click()
+        u.log("Successfully clicked 'World rankings' button.")
 
-    # parent_div = driver.find_element(By.XPATH, '//*[@id="__next"]/div[2]/div/div[2]/div[1]/div[1]/div[2]/div/div[2]/div[1]/div[2]/div[1]/div[2]/div[1]/div/div/div[1]/div[2]')
-    # children = parent_div.find_elements(By.XPATH, "./*")
+        stats_section = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "athletesStatisticsTable_athletesStatisticsContent__dDNOs"))
+        )
+        # event_sections = stats_section.find_elements(By.CLASS_NAME, "athletesCardContainer_athletesCardContainer__39h-0")
+        # event_sections = stats_section.find_elements(By.XPATH, "//div[contains(@class, 'athletesCardContainer')]")
+        event_sections = stats_section.find_elements(By.XPATH, 
+            "//div[contains(@class, 'athletesCardContainer')]"
+            " | //div[contains(text(), 'Race Walking')]"
+            " | //div[contains(text(), 'Ranking')]"
+        )
 
-    # for index, child in enumerate(children):
-    #         print(f"Child {index + 1}:")
-    #         print(f"Tag Name: {child.tag_name}")
-    #         print(f"Text Content: {child.text}")
-    #         print(f"Attributes: {child.get_attribute('outerHTML')}")
-    #         print("------------")
+        u.log(f"Length: {len(event_sections)}")
 
+        for event in event_sections:
+            event_titles = event.find_elements(By.CLASS_NAME, "profileStatistics_rankingCardTitle__2OeiW")
+            labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
+            values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
 
+            for event_title in event_titles:
+                u.log(f"Event Title: {event_title.text}")
+
+            for label, value in zip(labels, values):
+                u.log(f"{label.text}: {value.text}")
+
+    except Exception as e:
+        u.log(f"Error getting world rankings: {e}", "error")
 
 
 
@@ -73,10 +89,6 @@ get_profile_image()
 close_cookie_banner()
 click_statistics_button()
 get_world_rankings()
-
-# WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()='STATISTICS']")))
-# WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[@value='World rankings']")))
-
 
 
 driver.quit()
