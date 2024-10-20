@@ -8,12 +8,12 @@ FROM
 FROM JudgeCall LEFT JOIN
 (SELECT JudgeCall.BibNumber, JudgeCall.IDRace, JudgeCall.Color, JudgeCall.Infraction
 FROM JudgeCall 
-WHERE JudgeCall.IDRace = 6
+WHERE JudgeCall.IDRace = ?
 GROUP BY JudgeCall.BibNumber, JudgeCall.IDRace, JudgeCall.Color, JudgeCall.Infraction
-HAVING (Count(JudgeCall.Infraction))>=(Select count(idJudge)/2 from RaceJudge WHERE RaceJudge.IDRace=6)) MajorityCallPerAthlete 
+HAVING (Count(JudgeCall.Infraction))>=(Select count(idJudge)/2 from RaceJudge WHERE RaceJudge.IDRace=?)) MajorityCallPerAthlete 
 ON (JudgeCall.Infraction = MajorityCallPerAthlete.Infraction) AND (JudgeCall.Color = MajorityCallPerAthlete.Color) AND 
 (JudgeCall.BibNumber = MajorityCallPerAthlete.BibNumber) AND (JudgeCall.IDRace = MajorityCallPerAthlete.IDRace)
-WHERE (MajorityCallPerAthlete.BibNumber IS NULL) and JudgeCall.IDRace=6
+WHERE (MajorityCallPerAthlete.BibNumber IS NULL) and JudgeCall.IDRace=?
 GROUP BY JudgeCall.IDJudge, JudgeCall.Color, JudgeCall.Infraction) DiscrepanciesByJudge
 LEFT JOIN Judge on Judge.IDJudge=DiscrepanciesByJudge.IDJudge
 GROUP BY DiscrepanciesByJudge.IDJudge

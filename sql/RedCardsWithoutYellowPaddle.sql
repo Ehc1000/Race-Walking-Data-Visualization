@@ -11,6 +11,6 @@ SELECT FirstName, LastName,
                 
 FROM JudgeCall J1
 JOIN Judge J ON J1.IDJudge = J.IDJudge
-WHERE J1.IDRace = 6
+WHERE J1.IDRace = ?
 Group By J1.IDJudge
 Order By FirstName, LastName

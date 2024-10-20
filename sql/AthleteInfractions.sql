@@ -14,7 +14,7 @@ FROM
     Athlete 
 INNER JOIN Bib ON (Bib.IDAthlete = Athlete.IDAthlete)
 INNER JOIN JudgeCall ON (Bib.BibNumber = JudgeCall.BibNumber AND Bib.IDRace = JudgeCall.IDRace) 
-        WHERE JudgeCall.IDRace = 6 
+        WHERE JudgeCall.IDRace = ?
 GROUP BY 
     Bib.BibNumber, JudgeCall.Color, JudgeCall.Infraction) AthleteInfractions
     GROUP BY AthleteInfractions.BibNumber
