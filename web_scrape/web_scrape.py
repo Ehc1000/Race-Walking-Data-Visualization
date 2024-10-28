@@ -13,7 +13,7 @@ import utils as u
 def set_up():
     chrome_options = Options()
     chrome_options.add_argument("--headless")
-    webdriver_service = Service(c.CHROME_DRIVER_PATH)  # TODO: Update with the path to your chromedriver TODO: install driver
+    webdriver_service = Service(c.MAC_CHROME_DRIVER_PATH)  # TODO: Update with the path to your chromedriver TODO: install driver
     driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
     url = "https://worldathletics.org/athletes/spain/alvaro-martin-14410246" #TODO: url hardcoded
     driver.get(url)
@@ -80,6 +80,40 @@ def get_world_rankings():
 
     except Exception as e:
         u.log(f"Error getting world rankings: {e}", "error")
+    
+def get_personal_bests():
+    try:
+        personal_bests_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='Personal bests']"))
+        )
+        personal_bests_button.click()
+        u.log("Successfully clicked 'Personal Bests' button.")
+
+        stats_section = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "athletesStatisticsTable_athletesStatisticsContent__dDNOs"))
+        )
+        event_sections = stats_section.find_elements(By.XPATH, 
+            "//div[contains(@class, 'athletesCardContainer')]"
+            " | //div[contains(text(), 'Race Walk')]"
+            " | //div[contains(text(), 'Ranking')]"
+        )
+
+        u.log(f"Length: {len(event_sections)}")
+
+        for event in event_sections:
+            event_titles = event.find_elements(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")
+            labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
+            values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
+
+            for event_title in event_titles:
+                u.log(f"Event Title: {event_title.text}")
+
+            for label, value in zip(labels, values):
+                u.log(f"{label.text}: {value.text}")
+
+    except Exception as e:
+        u.log(f"Error getting Personal Bests: {e}", "error")
+
 
 
 
@@ -87,8 +121,9 @@ def get_world_rankings():
 driver = set_up()
 get_profile_image()
 close_cookie_banner()
-click_statistics_button()
+click_statistics_button()  
 get_world_rankings()
+get_personal_bests()
 
 
 driver.quit()
