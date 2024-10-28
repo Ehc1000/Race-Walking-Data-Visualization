@@ -2,7 +2,7 @@ SELECT J.FirstName, J.LastName, JC.BibNumber, A.FirstName, A.LastName, JC.Infrac
 CASE  
     WHEN Infraction = "~" AND VideoLOC.LOCAverage >= 60 THEN 'CORRECT'
     WHEN Infraction = "~" AND VideoLOC.LOCAverage < 60 THEN 'X'
-    WHEN Infraction = "<" AND VideoBent.AverageKneeBend > 0 AND VideoBent.AverageKneeBend <= 175 THEN 'CORRECT'
+    WHEN Infraction = "<" AND VideoBent.AverageKneeBend > ? AND VideoBent.AverageKneeBend <= ? THEN 'CORRECT'
     ELSE 'X'
 END Correctness
 FROM JudgeCall JC INNER JOIN Judge J ON JC.IDJudge=J.IDJudge
@@ -19,7 +19,7 @@ ON VideoLOC.BibNumber = JC.BibNumber
 LEFT JOIN
 (SELECT Athlete.BibNumber, Round(avg(KneeAngle),1) as AverageKneeBend, COUNT(Athlete.BibNumber) AS NbrMeasurements, Athlete.FirstName, Athlete.LastName
 FROM VideoObservation INNER JOIN Athlete ON VideoObservation.IDAthlete =Athlete.IDAthlete
-WHERE IDRace=? AND KneeAngle > 0 AND KneeAngle <=175
+WHERE IDRace=? AND KneeAngle > ? AND KneeAngle <=?
 GROUP BY Athlete.BibNumber
 HAVING COUNT(Athlete.BibNumber) > 1) VideoBent
 ON VideoBent.BibNumber = JC.BibNumber
