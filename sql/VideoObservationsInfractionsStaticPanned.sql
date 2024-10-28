@@ -11,7 +11,7 @@ GROUP BY BibNumber
 HAVING COUNT(BibNumber) > 1)
 UNION
 SELECT COUNT(BibNumber) AS NbrInfractions, "~" AS Infraction, "Static" AS CameraPosition FROM (SELECT BibNumber, ROUND(AVG(LOCAverage),1) AS LOCAverage 
-FROM VideoObservation WHERE IDRace = ? AND LOCAverage >=60
+FROM VideoObservation WHERE IDRace = ? AND LOCAverage >=?
 GROUP BY BibNumber
 HAVING COUNT(BibNumber)>=2)
 UNION
@@ -22,7 +22,7 @@ GROUP BY BibNumber
 HAVING COUNT(BibNumber) > 1)
 UNION
 SELECT COUNT(BibNumber) AS NbrInfractions, "~" AS Infraction, "Panned" AS CameraPosition FROM (SELECT BibNumber, ROUND(AVG(LOCAverage),1) AS LOCAverage 
-FROM VideoObservationPanned WHERE IDRace = ? AND LOCAverage >=60
+FROM VideoObservationPanned WHERE IDRace = ? AND LOCAverage >=?
 GROUP BY BibNumber
 HAVING COUNT(BibNumber)>=2)
 ORDER BY Infraction, CameraPosition)

@@ -14,7 +14,7 @@ AND JC.BibNumber NOT IN
     (SELECT VO.BibNumber FROM VideoObservation VO WHERE KneeAngle > ? AND KneeAngle <= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1)
 AND JC.BibNumber NOT IN 
-(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= ? AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1)
 GROUP BY JC.IDJudge
@@ -29,7 +29,7 @@ LEFT JOIN
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1)
      UNION
 SELECT JC.IDJudge, JC.BibNumber FROM JudgeCall JC WHERE JC.IDRace=? AND JC.Color="Red" AND JC.Infraction="~" AND JC.BibNumber IN
-(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+(SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= ? AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1)) InnerDetails ON J.IDJudge=InnerDetails.IDJudge
 GROUP BY InnerDetails.IDJudge
@@ -49,7 +49,7 @@ WHERE KneeAngle > ? AND KneeAngle <= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber, VO.IDRace, "Red" AS Color, "~" AS Infraction FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+WHERE VO.LOCAverage >= ? AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1) CorrectCalls, RaceJudge
 WHERE RaceJudge.IDRace=?
@@ -75,7 +75,7 @@ WHERE KneeAngle > ? AND KneeAngle <= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber, VO.IDRace, "Red" AS Color, "~" AS Infraction FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+WHERE VO.LOCAverage >= ? AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1) CorrectCalls, RaceJudge
 WHERE RaceJudge.IDRace=?) VideoCalls
@@ -107,7 +107,7 @@ WHERE KneeAngle > ? AND KneeAngle <= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) > 1
      UNION
 SELECT BibNumber FROM VideoObservation VO 
-WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+WHERE VO.LOCAverage >= ? AND VO.IDRace=?
 GROUP BY VO.BibNumber
 HAVING COUNT(VO.BibNumber) > 1))
 GROUP BY AllJudgesAllBib.IDJudge) FinalNoCalls
