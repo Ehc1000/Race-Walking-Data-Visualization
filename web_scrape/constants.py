@@ -1,2 +1,4 @@
-CHROME_DRIVER_PATH = "./web_scrape/chromedriver-win64/chromedriver.exe"
-MAC_CHROME_DRIVER_PATH = "./web_scrape/chromedriver-mac/chromedriver"
+DRIVER_PATHS = {
+    "Windows": "./web_scrape/chromedriver-win64/chromedriver.exe",
+    "Darwin": "./web_scrape/chromedriver-mac/chromedriver"
+}

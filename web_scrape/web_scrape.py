@@ -1,3 +1,5 @@
+import platform
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -12,21 +14,20 @@ import utils as u
 
 def set_up():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    webdriver_service = Service(c.MAC_CHROME_DRIVER_PATH)  # TODO: Update with the path to your chromedriver TODO: install driver
+    # chrome_options.add_argument("--headless")
+    
+    os_name = platform.system()
+    if os_name not in c.DRIVER_PATHS:
+        u.log("Unsupported OS. Only Windows and macOS are supported.", "error")
+        raise EnvironmentError("Unsupported OS. Only Windows and macOS are supported.")
+
+    webdriver_service = Service(c.DRIVER_PATHS[os_name])
+    url = "https://worldathletics.org/athletes/spain/alvaro-martin-14410246" #TODO: Hardcoded URL for now
     driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
-    url = "https://worldathletics.org/athletes/spain/alvaro-martin-14410246" #TODO: url hardcoded
+    driver.maximize_window()
     driver.get(url)
 
     return driver
-
-def get_profile_image():
-    try:
-        img_element = driver.find_element(By.XPATH, "//img[@alt='Athlete']")
-        img_url = img_element.get_attribute("src")
-        u.log(f"Image URL: {img_url}")
-    except Exception as e:
-        u.log(f"Error finding image: {e}", "error")
 
 def close_cookie_banner():
     try:
@@ -37,6 +38,14 @@ def close_cookie_banner():
         u.log("Successfully clicked the 'Allow all cookies' button.")
     except Exception as e:
         u.log(f"Error closing cookie banner: {e}", "error")
+
+def get_profile_image():
+    try:
+        img_element = driver.find_element(By.XPATH, "//img[@alt='Athlete']")
+        img_url = img_element.get_attribute("src")
+        u.log(f"Image URL: {img_url}")
+    except Exception as e:
+        u.log(f"Error finding image: {e}", "error")
 
 def click_statistics_button():
     try:
@@ -114,16 +123,11 @@ def get_personal_bests():
     except Exception as e:
         u.log(f"Error getting Personal Bests: {e}", "error")
 
-
-
-
-
-driver = set_up()
-get_profile_image()
-close_cookie_banner()
-click_statistics_button()  
-get_world_rankings()
-get_personal_bests()
-
-
-driver.quit()
+if __name__ == "__main__":
+    driver = set_up()
+    close_cookie_banner()
+    get_profile_image()
+    click_statistics_button()  
+    get_world_rankings()
+    get_personal_bests()
+    driver.quit()

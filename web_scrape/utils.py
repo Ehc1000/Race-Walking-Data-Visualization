@@ -1,14 +1,10 @@
 import logging
 
-def write(content):
-    file_path = "./data.txt"
-    with open(file_path, "w", encoding="utf-8") as file:
-        file.write(content)
-
 logging.basicConfig(
     filename="web_scrape.log",
     filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt='%Y-%m-%d %H:%M:%S',  # Formats time up to seconds
     level=logging.INFO
 )
 
