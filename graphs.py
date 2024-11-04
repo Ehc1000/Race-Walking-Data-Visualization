@@ -5,17 +5,17 @@ import pandas as pd
 from bokeh.palettes import Blues8
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool, CheckboxGroup
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 graphs_bp = Blueprint('graphs', __name__)
 
 # Database connection
-conn = sqlite3.connect('DrexelRaceWalking.db')
+conn = sqlite3.connect('DrexelRaceWalking.db', check_same_thread=False)
 
 def read_loc_data():
     data = pd.read_sql('SELECT "ID", "IDRace", "BibNumber", "LOCAverage", "KneeAngle", "TOD" FROM VideoObservation WHERE BibNumber>0 ORDER BY TOD', conn)
-    data.columns = ['BibNumber', 'LOC', 'Time']
+    data.columns = ["ID", "IDRace", 'BibNumber', 'LOC', 'KneeAngle', 'Time']
     return data
 
 def read_bib_data():
@@ -36,7 +36,7 @@ def read_judge_calls_data():
 def graphs():
     # Generate the plot here
     loc_data = read_loc_data()
-    judge_calls_data = read_judge_calls_data()
+    judge_calls_data = pd.read_sql('SELECT * from JudgeCall WHERE IDRace=1 ORDER BY Color LIMIT 329', conn)
     bib_data = read_bib_data()
     name_data = read_id_data()
 
@@ -59,8 +59,8 @@ def graphs():
             'bib_number': [str(runner_id)] * len(loc_data_runner)
         })
         color = Blues8[random.randint(0, 7)]
-        name = loc_data_runner['FirstName'][0]
-        surname = loc_data_runner['LastName'][0]
+        name = loc_data_runner['FirstName'].get(0)
+        surname = loc_data_runner['LastName'].get(0)
         p.line(x='x', y='y', source=source, line_width=3, color=color, alpha=1, muted_alpha=0.1,
                legend_label=f"{name} {surname}")
         p.scatter(x='x', y='y', source=source, color=color, size=5)
@@ -90,8 +90,10 @@ def graphs():
 
             if not after_calls.empty:
                 nearest_after = after_calls.iloc[0]
-                t2 = (after_calls['Time'].iloc[0] - nearest_before['Time']).total_seconds()
-                t3 = (pd.to_datetime(row['TOD']) - nearest_before['Time']).total_seconds()
+                t2 = (after_calls['Time'].iloc[0] - nearest_before['Time'])
+                t3 = (pd.to_datetime(row['TOD']) - nearest_before['Time'])
+                print(t2)
+                print(t3)
                 loc1 = float(nearest_before['LOC'])
                 loc2 = float(after_calls['LOC'].iloc[0])
                 m = (loc2 - loc1) / (t2 - 0)  # Use t1=0 for nearest_before
