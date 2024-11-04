@@ -5,7 +5,8 @@ logging.basicConfig(
     filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt='%Y-%m-%d %H:%M:%S',  # Formats time up to seconds
-    level=logging.INFO
+    level=logging.INFO,
+    encoding="utf-8" #TODO: Look into if SQL can do this encoding
 )
 
 def log(message, level="info"):
