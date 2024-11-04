@@ -1,0 +1,29 @@
+<div class="table-container">
+    <h2>Table: {{ table }}</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                {% for column in content.columns %}
+                <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in content.rows %}
+            <tr>
+                {% for item in row %}
+                <td>
+                    <div class="editable" hx-target="closest td"
+                        hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
+                        contenteditable="true" hx-trigger="blur" hx-swap="outerHTML"
+                        hx-include="next input[name='value']" oninput="this.nextElementSibling.value = this.innerText">
+                        {{ item }}
+                    </div>
+                    <input type="hidden" name="value" value="{{ item }}" />
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

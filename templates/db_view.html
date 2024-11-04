@@ -1,8 +1,8 @@
-{# db_view.html #}
 <html>
 
 <head>
     <script src="https://unpkg.com/htmx.org"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/intersection-observer.js"></script>
     <style>
         .editable {
             cursor: pointer;
@@ -16,39 +16,24 @@
         .editing {
             background: #fff3cd;
         }
+
+        .table-placeholder {
+            min-height: 100px;
+            border: 1px dashed #ccc;
+            margin: 10px 0;
+        }
     </style>
 </head>
 
 <body>
-    {% for table, content in data.items() %}
-    <h2>Table: {{ table }}</h2>
-    <table border="1">
-        <thead>
-            <tr>
-                {% for column in content.columns %}
-                <th>{{ column }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in content.rows %}
-            <tr>
-                {% for item in row %}
-                <td>
-                    <div class="editable" hx-target="closest td"
-                        hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
-                        contenteditable="true" hx-trigger="blur" hx-swap="outerHTML"
-                        hx-include="next input[name='value']" oninput="this.nextElementSibling.value = this.innerText">
-                        {{ item }}
-                    </div>
-                    <input type="hidden" name="value" value="{{ item }}" />
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endfor %}
+    <div hx-ext="intersection-observer">
+        {% for table in tables %}
+        <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}"
+            hx-trigger="intersect once" hx-swap="outerHTML">
+            Loading {{ table }}...
+        </div>
+        {% endfor %}
+    </div>
 </body>
 
 </html>
