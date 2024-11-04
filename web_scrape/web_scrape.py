@@ -164,6 +164,7 @@ def get_personal_bests():
     except Exception as e:
         u.log(f"Error getting Personal Bests: {e}", "error")
 
+#TODO: For some reason Row 9 of Table 1 always has missing data???
 def get_progression():
     try:
         progression_button = WebDriverWait(driver, 10).until(
