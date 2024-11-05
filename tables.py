@@ -26,11 +26,9 @@ def display_table():
     db_file = query_params.pop('db', 'RWComplete.db')
     table_style = query_params.pop('style', 'default-style')
 
-    needed_parameters = cmn.get_sql_parameters(query_file)
-
     # collects all the needed named parameter values for the query, setting to a default if not specified
     # in the http request query params
-    query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_parameters}
+    query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in cmn.get_sql_parameters(query_file)}
 
     df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
 
