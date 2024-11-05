@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
 
-from common import df_from_labeled_query
+import common as cmn
 
 # from weasyprint import HTML
 
@@ -17,15 +17,22 @@ tables_bp = Blueprint('tables', __name__)
 
 @tables_bp.route('/')
 def display_table():
+    # converts the multidict of arguments to a normal dict
+    # note that this will keep only the first value for each key
+    # whereas a multidict can have a multiple values for each key
     query_params = request.args.to_dict()
 
     query_file = query_params.pop('query', 'AthleteInfractions.sql')
     db_file = query_params.pop('db', 'RWComplete.db')
     table_style = query_params.pop('style', 'default-style')
 
-    params = query_params
+    needed_parameters = cmn.get_sql_parameters(query_file)
 
-    df = df_from_labeled_query(query_file, db_file, params=params)
+    # collects all the needed named parameter values for the query, setting to a default if not specified
+    # in the http request query params
+    query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_parameters}
+
+    df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
 
     html_table = df.to_html(classes=table_style, index=False)
     html_content = render_template('tables.html', table=html_table)

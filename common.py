@@ -10,13 +10,14 @@ QUERY_FOLDER = 'sql'
 LABELED_QUERY_FOLDER = 'sql-named-parameters'
 DB_FOLDER = ''
 
+PARAMETER_DEFAULTS = {"race_id": 6}
 
 # NORMAL QUERY OPERATIONS
 
 def df_from_query(query_file, db_file, params=()):
     with open(f'{QUERY_FOLDER}/{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
-    with sql.connect(f'{DB_FOLDER}/{db_file}') as conn:
+    with sql.connect(f'{DB_FOLDER}{db_file}') as conn:
         df = pd.read_sql_query(sql_query, conn, params=params)
     return df
 
@@ -43,7 +44,7 @@ def df_from_labeled_query(query_file, db_file, params=None):
         params = {}
     with open(f'{LABELED_QUERY_FOLDER}/{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
-    with sql.connect(f'{DB_FOLDER}/{db_file}') as conn:
+    with sql.connect(f'{DB_FOLDER}{db_file}') as conn:
         df = pd.read_sql_query(sql_query, conn, params=params)
     return df
 
