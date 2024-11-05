@@ -5,7 +5,7 @@ a large swathe of race walking data.
 
 ## Prerequisites
 
-First install [wkhtmltodpf](https://wkhtmltopdf.org/downloads.html) and add its bin folder to your path.
+First install to a location of your choosing [wkhtmltodpf](https://wkhtmltopdf.org/downloads.html) and add its bin folder to your path.
 
 Then, use pip to install the dependencies.
 
