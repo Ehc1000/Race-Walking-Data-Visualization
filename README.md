@@ -5,23 +5,23 @@ a large swathe of race walking data.
 
 ## Prerequisites
 
-Install [wkhtmltodpf](https://wkhtmltopdf.org/downloads.html) and add its bin folder to your path.
+First install [wkhtmltodpf](https://wkhtmltopdf.org/downloads.html) and add its bin folder to your path.
 
-## Running the application
-
-First, use pip to install the dependencies.
+Then, use pip to install the dependencies.
 
 ```shell script
 pip install -r requirements.txt
 ```
 
-Then simply spin up the web server.
+## Running the application
+
+Spin up the web server with the following command:
 
 ```shell script
 python app.py
 ```
 
-View the application now running on [http://localhost:5000](http://localhost:5000).
+You can view the application now running on [http://localhost:5000](http://localhost:5000).
 
 ## Coding Guidelines
 
