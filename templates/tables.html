@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Table Page!</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
+    <link rel="stylesheet" href="{{ url_for("static", filename="tables.css") }}">
 </head>
 <body>
 
 <label for="style-select">Choose a style:</label>
 <select id="style-select" onchange="updateQueryParams('style', this.value)">
-    <option value="default-style" {% if table_style == 'default-style' %}selected{% endif %}>Default</option>
-    <option value="striped" {% if table_style == 'striped' %}selected{% endif %}>Striped</option>
-    <option value="bordered" {% if table_style == 'bordered' %}selected{% endif %}>Bordered</option>
-    <option value="highlighted" {% if table_style == 'highlighted' %}selected{% endif %}>Highlighted</option>
+    <option value="default-style" {% if table_style == "default-style" %}selected{% endif %}>Default</option>
+    <option value="striped" {% if table_style == "striped" %}selected{% endif %}>Striped</option>
+    <option value="bordered" {% if table_style == "bordered" %}selected{% endif %}>Bordered</option>
+    <option value="highlighted" {% if table_style == "highlighted" %}selected{% endif %}>Highlighted</option>
 </select>
 <br>
 
@@ -37,13 +37,24 @@
         <h4>Enter query parameters:</h4>
         {% for param in needed_parameters %}
             <label for="{{ param }}">{{ param }}:</label>
-            <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, '') }}"
+            <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, "") }}"
                    onchange="updateQueryParams('{{ param }}', this.value)">
             <br>
         {% endfor %}
     </div>
     <br>
 {% endif %}
+
+<form action="{{ url_for("tables.download_pdf") }}" method="get">
+    <input type="hidden" name="query" value="{{ query_file }}">
+    <input type="hidden" name="db" value="{{ db_file }}">
+    <input type="hidden" name="style" value="{{ table_style }}">
+    {% for param, value in query_params.items() %}
+        <input type="hidden" name="{{ param }}" value="{{ value }}">
+    {% endfor %}
+    <button type="submit">Download PDF</button>
+</form>
+<br>
 
 <div id="table-container">
     {{ table | safe }}

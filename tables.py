@@ -1,36 +1,31 @@
-from flask import Blueprint, render_template, request
+import os
+
+from flask import Blueprint, render_template, request, send_file
 
 import common as cmn
 
-# from weasyprint import HTML
+try:
+    # https://pypi.org/project/pdfkit/
+    import pdfkit
+except ImportError as ie:
+    print(ie.msg)
+    pdfkit = False
 
-# https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#python-library
-# Did some googling, and it seemed weasyprint was a good html to pdf library, but
-# it requires some more installing than just pip, so not bothering with for now.
-# import pdfkit
-# https://pypi.org/project/pdfkit/
-# Tried pdfkit after writing this, but it also requires some extra installation stuff.
-# So not going to check in any code that uses either yet. Will mess around and do more research.
-
-tables_bp = Blueprint('tables', __name__)
+tables_bp = Blueprint("tables", __name__)
 
 
-@tables_bp.route('/')
-def display_table():
+def generate_table():
     # converts the multidict of arguments to a normal dict
     # note that this will keep only the first value for each key
     # whereas a multidict can have a multiple values for each key
     query_params = request.args.to_dict()
-
-    query_file = query_params.pop('query', 'AthleteInfractions.sql')
-    db_file = query_params.pop('db', 'RWComplete.db')
-    table_style = query_params.pop('style', 'default-style')
-
+    query_file = query_params.pop("query", "AthleteInfractions.sql")
+    db_file = query_params.pop("db", "RWComplete.db")
+    table_style = query_params.pop("style", "default-style")
     # collects all the needed named parameter values for the query, setting to a default if not specified
     # in the http request query params
     needed_params = cmn.get_labeled_sql_parameters(query_file)
     query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_params}
-
     try:
         df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
         html_table = df.to_html(classes=table_style, index=False)
@@ -39,18 +34,31 @@ def display_table():
             html_table = "<p>The Drexel race walking database does not support this query.</p>"
         else:
             html_table = f"<p>Query failed for the following reason:</p><p>{str(e)}</p>"
+    return needed_params, html_table, db_file, query_file, table_style, query_params
 
-    # pdfkit line:
-    # pdfkit.from_string(html_content, '/output/test.pdf')
-    # weasyprint line:
-    # pdf = HTML(string=html_table).write_pdf(stylesheets=['static/tables.css'])
-    # this will not work unless you have the stuff locally installed
-    # so imma just comment it out
+
+@tables_bp.route("/download_pdf")
+def download_pdf():
+    if not pdfkit:
+        return "PDF generation is not available because pdfkit or wkhtmltopdf is not installed."
+    # would technically be better if it didn't rerun the query and making the table when the user
+    # hits the download button but who cares
+    needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
+    pdf_name = f"{db_file}_{query_file}_{table_style}.pdf"
+    pdf_output_path = f"{cmn.TMP_FOLDER}{pdf_name}"
+    os.makedirs(cmn.TMP_FOLDER, exist_ok=True)
+    css_path = "static/tables.css"
+    pdfkit.from_string(html_table, pdf_output_path, css=css_path)
+    return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
+
+
+@tables_bp.route("/")
+def display_table():
+    needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
     query_options = cmn.get_all_labeled_queries()
     db_options = cmn.get_dbs()
-
     return render_template(
-        'tables.html',
+        "tables.html",
         table=html_table,
         table_style=table_style,
         db_file=db_file,
@@ -62,10 +70,9 @@ def display_table():
     )
 
 
-# We can also treat this file as a command line script and forget we are using flask.
 def main():
     print("This function runs when the script is executed directly!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

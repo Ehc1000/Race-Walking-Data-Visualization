@@ -3,6 +3,10 @@
 This is the (new) repo for an application which allows a user to display, graph, and modify
 a large swathe of race walking data.
 
+## Prerequisites
+
+Install [wkhtmltodpf](https://wkhtmltopdf.org/downloads.html) and add its bin folder to your path.
+
 ## Running the application
 
 First, use pip to install the dependencies.
