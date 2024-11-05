@@ -4,29 +4,55 @@
     <meta charset="UTF-8">
     <title>Table Page!</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
-    {# Using this url_for code to get the path out of habit but you can just hardcode it. But url_for
-    is good just so things aren't hardcoded and can be used for a lot of things.'#}
 </head>
 <body>
-<h1>Here's the table baby!</h1>
+
 <label for="style-select">Choose a style:</label>
-<select id="style-select" onchange="updateTableStyle()">
-    <option value="default-style">Default</option>
-    <option value="striped">Striped</option>
-    <option value="bordered">Bordered</option>
-    <option value="highlighted">Highlighted</option>
+<select id="style-select" onchange="updateQueryParams('style', this.value)">
+    <option value="default-style" {% if table_style == 'default-style' %}selected{% endif %}>Default</option>
+    <option value="striped" {% if table_style == 'striped' %}selected{% endif %}>Striped</option>
+    <option value="bordered" {% if table_style == 'bordered' %}selected{% endif %}>Bordered</option>
+    <option value="highlighted" {% if table_style == 'highlighted' %}selected{% endif %}>Highlighted</option>
 </select>
 <br>
+
+<label for="db-select">Choose a database:</label>
+<select id="db-select" onchange="updateQueryParams('db', this.value)">
+    {% for db in db_options %}
+        <option value="{{ db }}" {% if db_file == db %}selected{% endif %}>{{ db }}</option>
+    {% endfor %}
+</select>
+<br>
+
+<label for="query-select">Choose a query:</label>
+<select id="query-select" onchange="updateQueryParams('query', this.value)">
+    {% for query in query_options %}
+        <option value="{{ query }}" {% if query_file == query %}selected{% endif %}>{{ query }}</option>
+    {% endfor %}
+</select>
+<br>
+
+<div id="parameter-container">
+    <h4>Enter query parameters:</h4>
+    {% for param in needed_parameters %}
+        <label for="{{ param }}">{{ param }}:</label>
+        <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, '') }}"
+               onchange="updateQueryParams('{{ param }}', this.value)">
+        <br>
+    {% endfor %}
+</div>
+<br>
+
 <div id="table-container">
     {{ table | safe }}
-    {# This is passed in to the template when you call render_template! The safe keyword is so
-        it properly renders as actual html, and not just text. #}
 </div>
+
 <script>
-    function updateTableStyle() {
-        const selectedStyle = document.getElementById("style-select").value;
-        const table = document.querySelector("#table-container table");
-        table.className = selectedStyle;
+    // it would be technically be better if changing the style didn't reload the whole page, but who cares
+    function updateQueryParams(key, value) {
+        const url = new URL(window.location.href);
+        url.searchParams.set(key, value);
+        window.location.href = url.toString();
     }
 </script>
 </body>

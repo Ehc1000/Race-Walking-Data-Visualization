@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 
 import common as cmn
 
@@ -15,6 +15,12 @@ import common as cmn
 tables_bp = Blueprint('tables', __name__)
 
 
+@tables_bp.route('/needed-parameters', methods=['GET'])
+def needed_parameters_for_query():
+    query_file = request.args.get('query')
+    needed_params = cmn.get_labeled_sql_parameters(query_file)
+    return jsonify(needed_params)
+
 @tables_bp.route('/')
 def display_table():
     # converts the multidict of arguments to a normal dict
@@ -28,20 +34,32 @@ def display_table():
 
     # collects all the needed named parameter values for the query, setting to a default if not specified
     # in the http request query params
-    query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in cmn.get_sql_parameters(query_file)}
+    needed_params = cmn.get_labeled_sql_parameters(query_file)
+    query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_params}
 
     df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
 
     html_table = df.to_html(classes=table_style, index=False)
-    html_content = render_template('tables.html', table=html_table)
     # pdfkit line:
     # pdfkit.from_string(html_content, '/output/test.pdf')
     # weasyprint line:
     # pdf = HTML(string=html_table).write_pdf(stylesheets=['static/tables.css'])
     # this will not work unless you have the stuff locally installed
     # so imma just comment it out
+    query_options = cmn.get_all_labeled_queries()
+    db_options = cmn.get_dbs()
 
-    return html_content
+    return render_template(
+        'tables.html',
+        table=html_table,
+        table_style=table_style,
+        db_file=db_file,
+        query_file=query_file,
+        db_options=db_options,
+        query_options=query_options,
+        needed_parameters=needed_params,
+        query_params=query_params
+    )
 
 
 # We can also treat this file as a command line script and forget we are using flask.

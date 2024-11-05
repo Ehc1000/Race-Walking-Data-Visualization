@@ -1,4 +1,4 @@
-Select Judge.FirstName,
+SELECT Judge.FirstName,
        Judge.LastName,
        max(case When Infraction = '~' AND Color = 'Red' THEN MajorityNumber Else 0 END)    MajorityMatchedLOCRed,
        max(case When Infraction = '<' AND Color = 'Red' THEN MajorityNumber Else 0 END)    MajorityMatchedBentRed,

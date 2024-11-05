@@ -7,7 +7,7 @@ import pandas as pd
 # https://docs.python.org/3/library/sqlite3.html
 
 QUERY_FOLDER = 'sql/'
-LABELED_QUERY_FOLDER = 'sql-named-parameters/'
+LABELED_QUERY_FOLDER = 'sql-read/'
 DB_FOLDER = 'db/'
 
 PARAMETER_DEFAULTS = {"race_id": 6}
@@ -54,7 +54,7 @@ def get_all_labeled_queries():
     return [f for f in os.listdir(LABELED_QUERY_FOLDER) if f.endswith('.sql')]
 
 
-def get_sql_parameters(query_file):
+def get_labeled_sql_parameters(query_file):
     with open(f'{LABELED_QUERY_FOLDER}{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
     # since let's be honest, none of us have regex memorized, let's be specific here:
@@ -65,3 +65,8 @@ def get_sql_parameters(query_file):
     # disregarding the colon.
     parameters = re.findall(r':(\w+)', sql_query)
     return list(set(parameters))
+
+# DATABASES
+
+def get_dbs():
+    return [f for f in os.listdir(DB_FOLDER) if f.endswith('.db')]
