@@ -9,7 +9,25 @@
 </head>
 <body>
 <h1>Here's the table baby!</h1>
-{{ table | safe }} {# This is passed in to the template when you call render_template! The safe keyword is so
-it properly renders as actual html, and not just text. #}
+<label for="style-select">Choose a style:</label>
+<select id="style-select" onchange="updateTableStyle()">
+    <option value="default-style">Default</option>
+    <option value="striped">Striped</option>
+    <option value="bordered">Bordered</option>
+    <option value="highlighted">Highlighted</option>
+</select>
+<br>
+<div id="table-container">
+    {{ table | safe }}
+    {# This is passed in to the template when you call render_template! The safe keyword is so
+        it properly renders as actual html, and not just text. #}
+</div>
+<script>
+    function updateTableStyle() {
+        const selectedStyle = document.getElementById("style-select").value;
+        const table = document.querySelector("#table-container table");
+        table.className = selectedStyle;
+    }
+</script>
 </body>
 </html>

@@ -1,3 +1,39 @@
 .default-style {
     width: 100%;
+    border-collapse: collapse;
+}
+
+.striped tr:nth-child(odd) {
+    background-color: #f2f2f2;
+}
+
+.bordered {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.bordered th, .bordered td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.highlighted tr:hover {
+    background-color: #f5f5f5;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+
+table td {
+    padding: 8px;
+    text-align: left;
 }
