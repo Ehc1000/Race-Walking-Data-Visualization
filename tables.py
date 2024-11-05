@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request
 
 import common as cmn
 
@@ -14,12 +14,6 @@ import common as cmn
 
 tables_bp = Blueprint('tables', __name__)
 
-
-@tables_bp.route('/needed-parameters', methods=['GET'])
-def needed_parameters_for_query():
-    query_file = request.args.get('query')
-    needed_params = cmn.get_labeled_sql_parameters(query_file)
-    return jsonify(needed_params)
 
 @tables_bp.route('/')
 def display_table():

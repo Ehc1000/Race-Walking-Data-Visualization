@@ -10,7 +10,7 @@ QUERY_FOLDER = 'sql/'
 LABELED_QUERY_FOLDER = 'sql-read/'
 DB_FOLDER = 'db/'
 
-PARAMETER_DEFAULTS = {"race_id": 6}
+PARAMETER_DEFAULTS = {"race_id": 1}
 
 
 # NORMAL QUERY OPERATIONS
@@ -65,6 +65,7 @@ def get_labeled_sql_parameters(query_file):
     # disregarding the colon.
     parameters = re.findall(r':(\w+)', sql_query)
     return list(set(parameters))
+
 
 # DATABASES
 
