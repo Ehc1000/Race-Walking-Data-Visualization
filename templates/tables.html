@@ -32,16 +32,18 @@
 </select>
 <br>
 
-<div id="parameter-container">
-    <h4>Enter query parameters:</h4>
-    {% for param in needed_parameters %}
-        <label for="{{ param }}">{{ param }}:</label>
-        <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, '') }}"
-               onchange="updateQueryParams('{{ param }}', this.value)">
-        <br>
-    {% endfor %}
-</div>
-<br>
+{% if needed_parameters %}
+    <div id="parameter-container">
+        <h4>Enter query parameters:</h4>
+        {% for param in needed_parameters %}
+            <label for="{{ param }}">{{ param }}:</label>
+            <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, '') }}"
+                   onchange="updateQueryParams('{{ param }}', this.value)">
+            <br>
+        {% endfor %}
+    </div>
+    <br>
+{% endif %}
 
 <div id="table-container">
     {{ table | safe }}

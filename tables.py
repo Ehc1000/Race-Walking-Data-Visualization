@@ -31,9 +31,15 @@ def display_table():
     needed_params = cmn.get_labeled_sql_parameters(query_file)
     query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_params}
 
-    df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
+    try:
+        df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
+        html_table = df.to_html(classes=table_style, index=False)
+    except Exception as e:
+        if db_file == "DrexelRaceWalking.db":
+            html_table = "<p>The Drexel race walking database does not support this query.</p>"
+        else:
+            html_table = f"<p>Query failed for the following reason:</p><p>{str(e)}</p>"
 
-    html_table = df.to_html(classes=table_style, index=False)
     # pdfkit line:
     # pdfkit.from_string(html_content, '/output/test.pdf')
     # weasyprint line:
