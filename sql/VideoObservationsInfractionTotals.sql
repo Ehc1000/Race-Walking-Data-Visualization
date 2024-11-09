@@ -1,6 +1,6 @@
 SELECT COUNT(BibNumber) AS NbrInfractions, "<" AS Infraction FROM (SELECT BibNumber
 FROM VideoObservation 
-WHERE IDRace=? AND KneeAngle <=?
+WHERE IDRace=? AND KneeAngle > ? AND KneeAngle <=?
 GROUP BY BibNumber
 HAVING COUNT(BibNumber) > 1)
 UNION
