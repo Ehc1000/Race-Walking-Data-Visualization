@@ -6,7 +6,7 @@ max(case When Infraction='~' AND CameraPosition='Static' THEN NbrInfractions Els
 FROM 
 (SELECT COUNT(BibNumber) AS NbrInfractions, "<" AS Infraction, "Static" AS CameraPosition FROM (SELECT BibNumber
 FROM VideoObservation 
-WHERE IDRace=? AND KneeAngle <=?
+WHERE IDRace=? AND KneeAngle > ? AND KneeAngle <=?
 GROUP BY BibNumber
 HAVING COUNT(BibNumber) > 1)
 UNION
@@ -17,7 +17,7 @@ HAVING COUNT(BibNumber)>=2)
 UNION
 SELECT COUNT(BibNumber) AS NbrInfractions, "<" AS Infraction, "Panned" AS CameraPosition FROM (SELECT BibNumber
 FROM VideoObservationPanned 
-WHERE IDRace=? AND KneeAngle <=?
+WHERE IDRace=? AND KneeAngle > ? AND KneeAngle <=?
 GROUP BY BibNumber
 HAVING COUNT(BibNumber) > 1)
 UNION
