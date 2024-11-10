@@ -1,47 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Database View</title>
-
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
-    <!-- jQuery -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <!-- DataTables JS -->
-    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script src="https://unpkg.com/htmx.org"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/intersection-observer.js"></script>
+    <link rel="stylesheet" href="../static/db_view.css">
 </head>
+
 <body>
-    <h1>Database Tables</h1>
-
-    {% for table, content in data.items() %}
-        <h2>Table: {{ table }}</h2>
-        <table id="{{ table }}" class="display">
-            <thead>
-                <tr>
-                    {% for column in content.columns %}
-                        <th>{{ column }}</th>
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in content.rows %}
-                    <tr>
-                        {% for item in row %}
-                            <td>{{ item }}</td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <script>
-            // Initialize DataTables for each table
-            $(document).ready(function() {
-                $('#{{ table }}').DataTable();
-            });
-        </script>
-    {% endfor %}
+    <div class="tables-wrapper">
+        <div hx-ext="intersection-observer">
+            {% for table in tables %}
+            <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}"
+                hx-trigger="intersect once" hx-swap="outerHTML">
+                Loading {{ table }}...
+            </div>
+            {% endfor %}
+        </div>
+    </div>
 </body>
+
 </html>
