@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, send_file
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
@@ -7,11 +7,12 @@ from bokeh.palettes import Blues8, Category10
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
+from bokeh.embed import components
+
 import os
 import chromedriver_binary
 
 graphs_bp = Blueprint('graphs', __name__)
-
 # Database connection
 conn = sqlite3.connect('DrexelRaceWalking.db', check_same_thread=False)
 
@@ -48,16 +49,28 @@ def read_judge_calls_data(race_id, athlete_ids):
     data = pd.read_sql(query, conn)
     return data
 
+def get_available_athletes(race_id):
+    query = f'''
+        SELECT DISTINCT BibNumber 
+        FROM VideoObservation 
+        WHERE IDRace={race_id}
+    '''
+    # Fetch data from the database
+    data = pd.read_sql(query, conn)
+    
+    # Debug output to check the content of the DataFrame
+    print(f"Query Result for Race {race_id}:")
+
+    # Return a list of BibNumbers
+    return data['BibNumber'].tolist()
+
 # Function to generate unique colors for each athlete
 def get_unique_color(runner_id, max_colors=10):
     return Category10[10][runner_id % max_colors]
 
-@graphs_bp.route('/')
-def graphs(race_id=1, athletes=[]):
-    # Ensure output directory exists
-    os.makedirs(f'graphs/race_{race_id}', exist_ok=True)
-    
+def generate_graph(race_id: int, athletes):
     # Fetch data for specified athlete IDs only
+    print(athletes)
     loc_data = read_loc_data(race_id, athletes)
     judge_calls_data = read_judge_calls_data(race_id, athletes)
     bib_data = read_bib_data()
@@ -69,13 +82,15 @@ def graphs(race_id=1, athletes=[]):
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
-    # Initialize figure for combined plot
+    # Initialize figure for plot
     p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
     
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
+        runner_id = int(float(runner_id))
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
+
         if loc_data_runner.empty:
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
@@ -146,13 +161,33 @@ def graphs(race_id=1, athletes=[]):
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
-    # Create filename with race ID and each runner ID
-    runner_ids_str = "_".join(map(str, athletes))
-    filename = f"graphs/race_{race_id}/race_{race_id}_{runner_ids_str}_plot.png"
+    graph_dir = 'static\graphs' 
+    
+    if not os.path.exists(graph_dir):
+        os.makedirs(graph_dir)
+    
+    # file path
+    graph_path = os.path.join(graph_dir, f"graph_{race_id}.png")
+    export_png(p, filename=graph_path)
 
-    # Export the combined plot as a PNG
-    export_png(p, filename=filename)
-    print(f"Plot saved as {filename}")
+    return graph_path
+
+
+@graphs_bp.route('/race/<int:race_id>', methods=['GET'])
+def graphs(race_id):
+    # If GET request, show the selection form
+    athletes = sorted(get_available_athletes(race_id))
+    return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
+
+
+@graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
+def generate_graph_route(race_id):
+    selected_athletes = request.args.getlist('selected_athletes')
+    graph_path = generate_graph(int(race_id), selected_athletes)
+    print(f"Graph saved at: {graph_path}")
+
+    return send_file(graph_path, mimetype='image/png')
+
 
 if __name__ == '__main__':
-    graphs(3, [100, 106, 108])
+    print("Here")
