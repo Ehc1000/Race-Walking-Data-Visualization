@@ -1,0 +1,118 @@
+/* Page background */
+body {
+    background: #f8f9fa;
+    color: #2c3e50;
+    line-height: 1.6;
+}
+
+/* Container for all tables */
+.tables-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* Individual table container */
+.table-container {
+    background: white;
+    margin: 2rem auto;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+/* Table header */
+.table-container h2 {
+    padding: 1rem 1.5rem;
+    margin: 0;
+    border-bottom: 1px solid #edf2f7;
+    font-size: 1.2rem;
+    color: #2d3748;
+    background: linear-gradient(to right, #e2e8f0, #edf2f7);
+    border-radius: 8px 8px 0 0;
+}
+
+/* Basic table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+th {
+    background: #f8fafc;
+    padding: 0.75rem 1.5rem;
+    text-align: left;
+    border-bottom: 2px solid #edf2f7;
+    color: #4a5568;
+    font-weight: 600;
+}
+
+td {
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #edf2f7;
+    color: #4a5568;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover {
+    background: #fafbfc;
+}
+
+/* Loading placeholder with fixed dimensions */
+.table-placeholder {
+    height: 300px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #718096;
+    margin: 2rem auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Editable cells */
+.editable {
+    padding: 0.25rem;
+    min-width: 2rem;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.editable:hover {
+    background: #edf2f7;
+    cursor: text;
+}
+
+.editable:focus {
+    outline: none;
+    background: #fff;
+    box-shadow: 0 0 0 2px #4299e1;
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.6;
+    }
+}
+
+.table-placeholder {
+    animation: pulse 1.5s infinite ease-in-out;
+}
