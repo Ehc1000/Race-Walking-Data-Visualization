@@ -123,8 +123,8 @@ def generate_graph(race_id: int, athletes):
 
         # Add judge call markers
         color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
-        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[]))
-
+        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
+        print(judge_calls_data)
         for _, row in judge_calls_data[judge_calls_data['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
             after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']].iloc[:1]
@@ -151,10 +151,10 @@ def generate_graph(race_id: int, athletes):
                 judge_calls_source.data['text'].append('  Judge #' + str(row['IDJudge']))
                 judge_calls_source.data['color'].append(color)
                 judge_calls_source.data['shape'].append(shape)
-
-            p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
+                judge_calls_source.data['infraction'].append(row['Infraction'])
             p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
-
+            p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
+            p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
     p.legend.location = "top_left"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"

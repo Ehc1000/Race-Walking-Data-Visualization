@@ -36,6 +36,7 @@
           <div class="buttons">
               <button type="button" onclick="moveToSelected()">→</button>
               <button type="button" onclick="moveToAvailable()">←</button>
+              <button type="button" onclick="moveAll()">Move All</button>
           </div>
   
           <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
@@ -75,6 +76,26 @@
                 available.add(option);
             });
         }
+
+        function moveAll() {
+          const available = document.getElementById('availableAthletes');
+          const selected = document.getElementById('selectedAthletes');
+
+          // Check if available list has options and move them to selected list
+          if (available.options.length > 0) {
+              while (available.options.length > 0) {
+                  selected.add(available.options[0]);
+              }
+          }
+          // Otherwise, move all from selected list to available list
+          else if (selected.options.length > 0) {
+              while (selected.options.length > 0) {
+                  available.add(selected.options[0]);
+              }
+          }
+        }
+
+
     </script>
 </body>
 </html>
