@@ -1,8 +1,8 @@
 SELECT J.FirstName, J.LastName, JC.BibNumber, A.FirstName, A.LastName, JC.Infraction, IFNULL(VideoLOC.LOCAverage, "-") AS LOC, IFNULL(VideoBent.AverageKneeBend, "-") as KneeAngle,
 CASE  
     WHEN Infraction = "~" AND VideoLOC.LOCAverage >= ? THEN 'CORRECT'
-    WHEN Infraction = "~" AND VideoLOC.LOCAverage < ? THEN 'X'
-    WHEN Infraction = "<" AND VideoBent.AverageKneeBend > ? AND VideoBent.AverageKneeBend <= ? THEN 'CORRECT'
+    WHEN Infraction = "~" AND VideoLOC.LOCAverage < 0 THEN 'X'
+    WHEN Infraction = "<" AND VideoBent.AverageKneeBend > 0 AND VideoBent.AverageKneeBend <= ? THEN 'CORRECT'
     ELSE 'X'
 END Correctness
 FROM JudgeCall JC INNER JOIN Judge J ON JC.IDJudge=J.IDJudge
