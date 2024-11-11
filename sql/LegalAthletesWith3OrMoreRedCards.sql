@@ -5,10 +5,10 @@ INNER JOIN Judge ON Judge.IDJudge=JudgeCall.IDJudge
 WHERE Color="Red" AND JudgeCall.IDRace = ? AND JudgeCall.BibNumber IN
 (SELECT JC.BibNumber FROM JudgeCall JC
 WHERE JC.Color = "Red" AND JC.IDRace=? and JC.BibNumber NOT IN 
-    (SELECT VO.BibNumber FROM VideoObservation VO WHERE BentKneeAngle > 0 AND BentKneeAngle <= 175 AND VO.IDRace=?
+    (SELECT VO.BibNumber FROM VideoObservation VO WHERE BentKneeAngle > 0 AND BentKneeAngle <= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber HAVING COUNT(VO.BibNumber) >= 2
      UNION
-     SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= 60 AND VO.IDRace=?
+     SELECT BibNumber FROM VideoObservation VO WHERE VO.LOCAverage >= ? AND VO.IDRace=?
      GROUP BY VO.BibNumber
      HAVING COUNT(BibNumber) >= 2)
 GROUP BY JC.BibNumber
