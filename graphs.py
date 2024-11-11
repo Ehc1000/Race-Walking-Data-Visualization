@@ -59,7 +59,7 @@ def graphs(race_id=1):
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
         # print(loc_data_runner)
-        p = figure(title=f'Loss of Contact vs Judge Calls for Runner {runner_id}', x_axis_type="datetime", width=1920, height=940)
+        p = figure(title=f'Loss of Contact vs Judge Calls for Runner {runner_id} during Race {race_id}', x_axis_type="datetime", width=1920, height=940)
         
         source = ColumnDataSource(data={
             'x': pd.to_datetime(loc_data_runner['Time']),
@@ -91,7 +91,7 @@ def graphs(race_id=1):
             'Yellow': 'yellow',
             'Red': 'red'
         }
-        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[]))
+        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], call_text=[]))
 
         for _, row in judge_calls_data[judge_calls_data['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
@@ -113,7 +113,10 @@ def graphs(race_id=1):
                 x_judge = pd.to_datetime(row['TOD'])
                 y_judge = loc3
                 color = color_mapping.get(row['Color'], 'red')
-
+                if color == 'red':
+                    judge_calls_source.data['call_text'].append('<')
+                else: 
+                    judge_calls_source.data['call_text'].append('~')
                 judge_calls_source.data['x'].append(x_judge)
                 judge_calls_source.data['y'].append(y_judge)
                 judge_calls_source.data['text'].append('  Judge #' + str(row['IDJudge']))
@@ -121,13 +124,15 @@ def graphs(race_id=1):
 
 
             p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
-            p.scatter(x='x',y='y', fill_color='color', source=judge_calls_source, size=10)
+            p.scatter(x='x',y='y', fill_color='color', source=judge_calls_source, size=15)
+            p.text(x='x', y='y', text='call_text', color='black', source=judge_calls_source, text_baseline="middle",text_align="center",text_font_size="14pt", y_offset=.5)
         p.legend.location = "top_left"
         p.legend.click_policy = "mute"
         p.background_fill_color = "white"
-
+        p.xaxis.axis_label = "Time"
+        p.yaxis.axis_label = "LOC"
         # Export the plot as a PNG
         export_png(p, filename=f"graphs/race_{race_id}/runner_{runner_id}_plot.png")
 
 if __name__ == '__main__':
-    graphs(1)
+    graphs(3)
