@@ -234,3 +234,6 @@ fabric.properties
 
 # EVERYTHING IN IDEA I'M GIT IGNORING FOR NOW
 .idea/
+
+# Everything in graphs folder
+graphs/
