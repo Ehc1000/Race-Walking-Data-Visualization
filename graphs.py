@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 import random
 from datetime import datetime
-from bokeh.palettes import Blues8
+from bokeh.palettes import Blues8, Category10
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
@@ -36,6 +36,10 @@ def read_judge_calls_data():
     data = pd.read_sql('SELECT * from JudgeCall WHERE IDRace=1 ORDER BY Color LIMIT 329', conn)
     return data
 
+# Function to generate unique colors for each athlete
+def get_unique_color(runner_id, max_colors=10):
+    return Category10[10][runner_id % max_colors]
+
 @graphs_bp.route('/')
 def graphs(race_id=1):
     # Read data
@@ -59,6 +63,10 @@ def graphs(race_id=1):
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
         # print(loc_data_runner)
+
+        # Assign a unique color for each athlete
+        athlete_color = get_unique_color(runner_id)
+
         p = figure(title=f'Loss of Contact vs Judge Calls for Runner {runner_id}', x_axis_type="datetime", width=1920, height=940)
         
         source = ColumnDataSource(data={
@@ -72,7 +80,7 @@ def graphs(race_id=1):
         name = loc_data_runner['FirstName'].iloc[0]
         surname = loc_data_runner['LastName'].iloc[0]
 
-        p.line(x='x', y='y', source=source, line_width=3, color=color, alpha=1, muted_alpha=0.1,
+        p.line(x='x', y='y', source=source, line_width=3, color=athlete_color, alpha=1, muted_alpha=0.1,
                legend_label=f"{name} {surname}")
         p.scatter(x='x', y='y', source=source, color=color, size=5)
 
@@ -91,7 +99,7 @@ def graphs(race_id=1):
             'Yellow': 'yellow',
             'Red': 'red'
         }
-        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[]))
+        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[]))
 
         for _, row in judge_calls_data[judge_calls_data['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
@@ -113,15 +121,17 @@ def graphs(race_id=1):
                 x_judge = pd.to_datetime(row['TOD'])
                 y_judge = loc3
                 color = color_mapping.get(row['Color'], 'red')
+                shape = 'square' if row['Color'] == 'Red' else 'circle'  # Square for red cards
 
                 judge_calls_source.data['x'].append(x_judge)
                 judge_calls_source.data['y'].append(y_judge)
                 judge_calls_source.data['text'].append('  Judge #' + str(row['IDJudge']))
                 judge_calls_source.data['color'].append(color)
+                judge_calls_source.data['shape'].append(shape)
 
 
             p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
-            p.scatter(x='x',y='y', fill_color='color', source=judge_calls_source, size=10)
+            p.scatter(x='x',y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
         p.legend.location = "top_left"
         p.legend.click_policy = "mute"
         p.background_fill_color = "white"
