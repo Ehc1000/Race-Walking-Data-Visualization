@@ -3,7 +3,7 @@ from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
 from datetime import datetime
-from bokeh.palettes import Blues8, Category10
+from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
@@ -66,17 +66,13 @@ def get_available_athletes(race_id):
 
 predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+athlete_to_color = {}
 
 # Function to generate unique colors for each athlete
-def get_unique_color(runner_index):
-    predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", 
-                         "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", 
-                         "#bcbd22", "#17becf"]
-    return predefined_colors[runner_index % len(predefined_colors)]
-
-# Function to generate unique colors for each athlete
-# def get_unique_color(runner_id, max_colors=10):
-#     return Category10[10][runner_id % max_colors]
+def get_unique_color(runner_id):
+    if runner_id not in athlete_to_color:
+        athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
+    return athlete_to_color[runner_id]
 
 def generate_graph(race_id: int, athletes):
     # Fetch data for specified athlete IDs only
