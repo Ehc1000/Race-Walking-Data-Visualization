@@ -64,9 +64,19 @@ def get_available_athletes(race_id):
     # Return a list of BibNumbers
     return data['BibNumber'].tolist()
 
+predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+
 # Function to generate unique colors for each athlete
-def get_unique_color(runner_id, max_colors=10):
-    return Category10[10][runner_id % max_colors]
+def get_unique_color(runner_index):
+    predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", 
+                         "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", 
+                         "#bcbd22", "#17becf"]
+    return predefined_colors[runner_index % len(predefined_colors)]
+
+# Function to generate unique colors for each athlete
+# def get_unique_color(runner_id, max_colors=10):
+#     return Category10[10][runner_id % max_colors]
 
 def generate_graph(race_id: int, athletes):
     # Fetch data for specified athlete IDs only
