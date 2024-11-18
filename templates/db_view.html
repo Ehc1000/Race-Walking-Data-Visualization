@@ -7,11 +7,19 @@
 </head>
 
 <body>
+    <nav>
+        <h1>Database Tables</h1>
+        <div>
+            {% for table in tables %}
+            <a href="#{{ table }}">{{ table }}</a>
+            {% endfor %}
+        </div>
+    </nav>
     <div class="tables-wrapper">
         <div hx-ext="intersection-observer">
             {% for table in tables %}
             <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}"
-                hx-trigger="intersect once" hx-swap="outerHTML">
+                hx-trigger="intersect once" hx-swap="outerHTML" id="{{ table }}">
                 Loading {{ table }}...
             </div>
             {% endfor %}
