@@ -16,10 +16,10 @@
         </div>
     </nav>
     <div class="tables-wrapper">
-        <div>
+        <div hx-ext="intersection-observer">
             {% for table in tables %}
-            <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}" hx-trigger="load once"
-                hx-swap="outerHTML">
+            <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}"
+                hx-trigger="intersect once" hx-swap="outerHTML" id="{{ table }}">
                 Loading {{ table }}...
             </div>
             {% endfor %}
