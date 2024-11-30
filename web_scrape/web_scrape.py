@@ -1,5 +1,5 @@
 import platform
-
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -10,6 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 
 import constants as c
 import utils as u
+
+import scrapedDataBase as db
+
+schema_path = os.path.join(os.path.dirname(__file__), "sql", "schema.sql")
+db.init_db("scraped_data.db", schema_path)
 
 
 def set_up():
@@ -46,6 +51,9 @@ def get_profile_image():
         u.log(f"Image URL: {img_url}")
     except Exception as e:
         u.log(f"Error finding image: {e}", "error")
+    return img_url
+    
+    
 
 def click_statistics_button():
     try:
@@ -55,7 +63,7 @@ def click_statistics_button():
     except Exception as e:
         u.log(f"Error clicking 'STATISTICS' button: {e}", "error")
 
-def get_world_rankings():
+def original_get_world_rankings():
     try:
         world_rankings_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='World rankings']"))
@@ -85,6 +93,64 @@ def get_world_rankings():
 
     except Exception as e:
         u.log(f"Error getting world rankings: {e}", "error")
+
+
+def get_world_rankings(athlete_id):
+    try:
+        # Click the "World rankings" button
+        world_rankings_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, "//button[text()='World rankings']"))
+        )
+        world_rankings_button.click()
+        u.log("Successfully clicked 'World rankings' button.")
+
+        # Wait for the statistics section to load
+        stats_section = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "athletesStatisticsTable_athletesStatisticsContent__dDNOs"))
+        )
+        event_sections = stats_section.find_elements(By.XPATH, 
+            "//div[contains(@class, 'athletesCardContainer')]"
+        )
+
+        # Iterate over each event section
+        for event_index, event in enumerate(event_sections, start=1):
+            try:
+                event_title = event.find_element(By.CLASS_NAME, "profileStatistics_rankingCardTitle__2OeiW").text
+
+                # Extract labels and values for each event
+                labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
+                values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
+
+                ranking_position = None
+                ranking_score = None
+                weeks_at_position = None
+
+                # Match labels to extract specific data
+                for label, value in zip(labels, values):
+                    if label.text == "Place":
+                        ranking_position = int(value.text)
+                    elif label.text == "Score":
+                        ranking_score = int(value.text)
+                    elif label.text == "Weeks":
+                        weeks_at_position = int(value.text)
+
+                # Log extracted data
+                u.log(f"Extracted ranking data for event #{event_index}:")
+                u.log(f"  Event Title: {event_title}")
+                u.log(f"  Ranking Position: {ranking_position}")
+                u.log(f"  Ranking Score: {ranking_score}")
+                u.log(f"  Weeks at Position: {weeks_at_position}")
+
+                # Insert ranking into the database
+                db.insert_ranking("scraped_data.db", athlete_id, event_title, ranking_position, ranking_score, weeks_at_position)
+            except Exception as inner_e:
+                u.log(f"Error processing event #{event_index}: {inner_e}", "error")
+
+        u.log("Successfully stored all world rankings.")
+    except Exception as e:
+        u.log(f"Error getting world rankings: {e}", "error")
+
+
 
 #athletesTitle_athletesTitle__388RT this has the card's race title
 #profileStatistics_personnalBestCardWrapper__-09Nt -- this is the wrapper holding all the data
@@ -242,20 +308,48 @@ def get_honours():
     except Exception as e:
         u.log(f"Error getting honours data: {e}", "error")
 
+def get_athlete_name(driver):
+    try:
+        # Wait for the element to be present
+        name_div = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "athletesBio_athletesBioTitle__3pPRL"))
+        )
+        spans = name_div.find_elements(By.TAG_NAME, "span")
+        athlete_first_name = spans[0].text
+        athlete_last_name = spans[1].text
+        full_name = f"{athlete_first_name} {athlete_last_name}"
+        u.log(f"Athlete Name: {full_name}")
+        return full_name
+    except Exception as e:
+        u.log(f"Error finding Athlete Name: {e}", "error")
+        return None
+    
 
+def scrape_athlete_data(driver): #--------------- This currently scrapes the athlethe basic info and the rankings (separate linked tables)
+    # Step 1: Get athlete name and profile image
+    full_name = get_athlete_name(driver)
+    profile_image_url = get_profile_image()
+
+    if full_name:
+        # Step 2: Insert athlete and get athlete_id
+        athlete_id = db.insert_athlete("scraped_data.db", full_name, profile_image_url)
+
+        # Step 3: Collect and store data
+        click_statistics_button()
+        get_world_rankings(athlete_id)
+        # Add calls to get_season_bests, get_personal_bests, etc.
+
+        u.log(f"Successfully scraped and stored data for {full_name}.")
+    else:
+        u.log("Failed to retrieve athlete name. Skipping data scraping.", "error")
 
 
 
 #Testing
 driver = set_up()
 close_cookie_banner()
-get_profile_image()
-click_statistics_button()
-get_world_rankings()
-get_season_bests()
-get_personal_bests()
-get_progression()
-# get_results()
-get_honours()
-
+scrape_athlete_data(driver)
+db.display_table("scraped_data.db", "athletes")
+db.display_table("scraped_data.db", "rankings")
 driver.quit()
+
