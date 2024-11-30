@@ -7,7 +7,7 @@ from bokeh.palettes import Blues8, Category10
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
-from bokeh.embed import components
+from bokeh.embed import components, file_html
 
 import os
 import chromedriver_binary
@@ -160,17 +160,10 @@ def generate_graph(race_id: int, athletes):
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
-
-    graph_dir = 'static\graphs' 
     
-    if not os.path.exists(graph_dir):
-        os.makedirs(graph_dir)
-    
-    # file path
-    graph_path = os.path.join(graph_dir, f"graph_{race_id}.png")
-    export_png(p, filename=graph_path)
+    html = file_html(p)
 
-    return graph_path
+    return html
 
 
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
@@ -183,10 +176,9 @@ def graphs(race_id):
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
 def generate_graph_route(race_id):
     selected_athletes = request.args.getlist('selected_athletes')
-    graph_path = generate_graph(int(race_id), selected_athletes)
-    print(f"Graph saved at: {graph_path}")
+    graph_html = generate_graph(int(race_id), selected_athletes)
 
-    return send_file(graph_path, mimetype='image/png')
+    return render_template("graphs.html", graph=graph_html)
 
 
 if __name__ == '__main__':

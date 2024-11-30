@@ -5,6 +5,7 @@
     <title>Race Graph</title>
     <link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.css" rel="stylesheet" type="text/css">
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js"></script>
+    <script htmx="https://unpkg.com/htmx.org"></script>
     <style>
         .dual-list-box {
             display: flex;
@@ -36,14 +37,14 @@
           <div class="buttons">
               <button type="button" onclick="moveToSelected()">→</button>
               <button type="button" onclick="moveToAvailable()">←</button>
-              <button type="button" onclick="moveAll()">Move All</button>
+              <button type="submit" >Generate Graph</button>
           </div>
   
           <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
           </select>
       </div>
   
-      <button type="submit">Generate Graph</button>
+      <button type="button" onclick="moveAll()">Move All</button>
   </form>
 
     <script>
