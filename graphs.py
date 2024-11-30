@@ -3,7 +3,7 @@ from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
 from datetime import datetime
-from bokeh.palettes import Blues8, Category10
+from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
@@ -64,11 +64,34 @@ def get_available_athletes(race_id):
     # Return a list of BibNumbers
     return data['BibNumber'].tolist()
 
-# Function to generate unique colors for each athlete
-def get_unique_color(runner_id, max_colors=10):
-    return Category10[10][runner_id % max_colors]
+# predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+#                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+# athlete_to_color = {}
+
+# # Function to generate unique colors for each athlete
+# def get_unique_color(runner_id):
+#     if runner_id not in athlete_to_color:
+#         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
+#     return athlete_to_color[runner_id]
 
 def generate_graph(race_id: int, athletes):
+    # Limit to 10 athletes
+    athletes = athletes[:10]
+
+    # Hardcoded palette of 10 distinct colors
+    predefined_colors = [
+        "#1f77b4",  # Blue
+        "#ff7f0e",  # Orange
+        "#2ca02c",  # Green
+        "#d62728",  # Red
+        "#9467bd",  # Purple
+        "#8c564b",  # Brown
+        "#e377c2",  # Pink
+        "#7f7f7f",  # Gray
+        "#bcbd22",  # Yellow-green
+        "#17becf"   # Cyan
+    ]
+
     # Fetch data for specified athlete IDs only
     print(athletes)
     loc_data = read_loc_data(race_id, athletes)
@@ -84,7 +107,7 @@ def generate_graph(race_id: int, athletes):
 
     # Initialize figure for plot
     p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
-    
+    index = 0
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
         runner_id = int(float(runner_id))
@@ -94,8 +117,10 @@ def generate_graph(race_id: int, athletes):
         if loc_data_runner.empty:
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
-
-        athlete_color = get_unique_color(runner_id)
+        # athlete_color = get_unique_color(runner_id)
+        # Assign the color based on the athlete's index
+        athlete_color = predefined_colors[index]
+        index += 1
         name = loc_data_runner['FirstName'].iloc[0]
         surname = loc_data_runner['LastName'].iloc[0]
 
