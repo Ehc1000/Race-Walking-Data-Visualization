@@ -1,0 +1,8 @@
+<div class="race-select-container">
+
+    <select id="raceSelect" name="race_id" onchange="updateRaceId()">
+        {% for race in races %}
+            <option value="{{ race.id }}" {% if race.id == selected_race_id %}selected{% endif %}>{{ race.name }}</option>
+        {% endfor %}
+    </select>
+</div>

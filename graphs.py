@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, send_file
+from flask import Blueprint, redirect, render_template, render_template_string, request, send_file
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
@@ -7,7 +7,7 @@ from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
-from bokeh.embed import components, file_html
+from bokeh.embed import components
 
 import os
 import chromedriver_binary
@@ -57,17 +57,25 @@ def get_available_athletes(race_id):
     '''
     # Fetch data from the database
     data = pd.read_sql(query, conn)
-    
+
     # Debug output to check the content of the DataFrame
     print(f"Query Result for Race {race_id}:")
 
     # Return a list of BibNumbers
     return data['BibNumber'].tolist()
 
+predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+athlete_to_color = {}
 # predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
 #                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 # athlete_to_color = {}
 
+# Function to generate unique colors for each athlete
+def get_unique_color(runner_id):
+    if runner_id not in athlete_to_color:
+        athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
+    return athlete_to_color[runner_id]
 # # Function to generate unique colors for each athlete
 # def get_unique_color(runner_id):
 #     if runner_id not in athlete_to_color:
@@ -77,7 +85,6 @@ def get_available_athletes(race_id):
 def generate_graph(race_id: int, athletes):
     # Limit to 10 athletes
     athletes = athletes[:10]
-
     # Hardcoded palette of 10 distinct colors
     predefined_colors = [
         "#1f77b4",  # Blue
@@ -91,7 +98,6 @@ def generate_graph(race_id: int, athletes):
         "#bcbd22",  # Yellow-green
         "#17becf"   # Cyan
     ]
-
     # Fetch data for specified athlete IDs only
     print(athletes)
     loc_data = read_loc_data(race_id, athletes)
@@ -107,6 +113,7 @@ def generate_graph(race_id: int, athletes):
 
     # Initialize figure for plot
     p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
+    
     index = 0
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
@@ -117,6 +124,7 @@ def generate_graph(race_id: int, athletes):
         if loc_data_runner.empty:
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
+        athlete_color = get_unique_color(runner_id)
         # athlete_color = get_unique_color(runner_id)
         # Assign the color based on the athlete's index
         athlete_color = predefined_colors[index]
@@ -185,10 +193,17 @@ def generate_graph(race_id: int, athletes):
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
-    
-    html = file_html(p)
 
-    return html
+    graph_dir = 'static\graphs' 
+
+    if not os.path.exists(graph_dir):
+        os.makedirs(graph_dir)
+
+    # file path
+    graph_path = os.path.join(graph_dir, f"graph_{race_id}.png")
+    export_png(p, filename=graph_path)
+
+    return graph_path
 
 
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
@@ -201,10 +216,82 @@ def graphs(race_id):
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
 def generate_graph_route(race_id):
     selected_athletes = request.args.getlist('selected_athletes')
-    graph_html = generate_graph(int(race_id), selected_athletes)
+    graph_path = generate_graph(int(race_id), selected_athletes)
+    print(f"Graph saved at: {graph_path}")
 
-    return render_template("graphs.html", graph=graph_html)
+    return send_file(graph_path, mimetype='image/png')
 
+@graphs_bp.route('/', methods=['GET', 'POST'])
+def select_race():
+    # Fetch available races
+    query = 'SELECT DISTINCT IDRace FROM VideoObservation'
+    race_data = pd.read_sql(query, conn)
+    race_ids = race_data['IDRace'].tolist()  # List of available race IDs
+    
+    # If form is submitted, redirect to the selected race ID
+    if request.method == 'POST':
+        race_id = request.form.get('race_id')
+        return redirect(f'/graphs/race/{race_id}')
+    
+    return render_template('graphs.html', race_ids=race_ids)
 
-if __name__ == '__main__':
-    print("Here")
+@graphs_bp.route('/get-available-athletes/', methods=['GET', 'POST'])
+def get_athletes():
+    race = request.args.get('race')  
+    athletes = get_available_athletes(race)
+    return render_template_string('''
+        {% for athlete in available_athletes %}
+            <option value="{{ athlete }}">{{ athlete }}</option>
+        {% endfor %}
+    ''', available_athletes=athletes)
+
+@graphs_bp.route('/graph-add/', methods=['POST'])
+def add_athletes():
+    # Get data from the request
+    print(request.form)
+    available_items = request.form.get('available-items')
+    print(available_items)
+    selected_items = request.form.get('selected-items')
+    print(selected_items)
+
+    # Process selected items
+    selected_to_add = request.form.getlist('available_items')
+    for item in selected_to_add:
+        if item in available_items:
+            available_items.remove(item)
+            selected_items.append(item)
+
+    return render_template_string('''
+        <!-- Updated Available Athletes -->
+        {% for athlete in available_items %}
+            <option value="{{ athlete }}">{{ athlete }}</option>
+        {% endfor %}
+        <!-- Updated Selected Athletes -->
+        {% for athlete in selected_items %}
+            <option value="{{ athlete }}">{{ athlete }}</option>
+        {% endfor %}
+    ''', available_items=available_items, selected_items=selected_items)
+
+@graphs_bp.route('/graph-remove/', methods=['POST'])
+def remove_athletes():
+    # Get data from the request
+    available_items = request.form.getlist('available-items')
+    selected_items = request.form.getlist('selected-items')
+
+    # Process deselected items
+    selected_to_remove = request.form.getlist('selected_items')
+    for item in selected_to_remove:
+        if item in selected_items:
+            selected_items.remove(item)
+            available_items.append(item)
+
+    return render_template_string('''
+        <!-- Updated Available Athletes -->
+        {% for athlete in available_items %}
+            <option value="{{ athlete }}">{{ athlete }}</option>
+        {% endfor %}
+        <!-- Updated Selected Athletes -->
+        {% for athlete in selected_items %}
+            <option value="{{ athlete }}">{{ athlete }}</option>
+        {% endfor %}
+    ''', available_items=available_items, selected_items=selected_items)
