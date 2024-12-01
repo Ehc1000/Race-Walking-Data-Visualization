@@ -499,7 +499,7 @@ def scrape_athlete_data():
 
 
 #Testing
-if __name__ == "main":
+if __name__ == "__main__":
     driver = set_up()
     close_cookie_banner()
     scrape_athlete_data()
