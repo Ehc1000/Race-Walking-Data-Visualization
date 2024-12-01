@@ -1,17 +1,18 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, send_file
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
 from datetime import datetime
-from bokeh.palettes import Blues8, Category10
+from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.io.export import export_png
+from bokeh.embed import components
+
 import os
 import chromedriver_binary
 
 graphs_bp = Blueprint('graphs', __name__)
-
 # Database connection
 conn = sqlite3.connect('DrexelRaceWalking.db', check_same_thread=False)
 
@@ -48,16 +49,57 @@ def read_judge_calls_data(race_id, athlete_ids):
     data = pd.read_sql(query, conn)
     return data
 
-# Function to generate unique colors for each athlete
-def get_unique_color(runner_id, max_colors=10):
-    return Category10[10][runner_id % max_colors]
+def get_available_athletes(race_id):
+    query = f'''
+        SELECT DISTINCT BibNumber 
+        FROM VideoObservation 
+        WHERE IDRace={race_id}
+    '''
+    # Fetch data from the database
+    data = pd.read_sql(query, conn)
 
-@graphs_bp.route('/')
-def graphs(race_id=1, athletes=[]):
-    # Ensure output directory exists
-    os.makedirs(f'graphs/race_{race_id}', exist_ok=True)
-    
+    # Debug output to check the content of the DataFrame
+    print(f"Query Result for Race {race_id}:")
+
+    # Return a list of BibNumbers
+    return data['BibNumber'].tolist()
+
+predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+athlete_to_color = {}
+# predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+#                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+# athlete_to_color = {}
+
+# Function to generate unique colors for each athlete
+def get_unique_color(runner_id):
+    if runner_id not in athlete_to_color:
+        athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
+    return athlete_to_color[runner_id]
+# # Function to generate unique colors for each athlete
+# def get_unique_color(runner_id):
+#     if runner_id not in athlete_to_color:
+#         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
+#     return athlete_to_color[runner_id]
+
+def generate_graph(race_id: int, athletes):
+    # Limit to 10 athletes
+    athletes = athletes[:10]
+    # Hardcoded palette of 10 distinct colors
+    predefined_colors = [
+        "#1f77b4",  # Blue
+        "#ff7f0e",  # Orange
+        "#2ca02c",  # Green
+        "#d62728",  # Red
+        "#9467bd",  # Purple
+        "#8c564b",  # Brown
+        "#e377c2",  # Pink
+        "#7f7f7f",  # Gray
+        "#bcbd22",  # Yellow-green
+        "#17becf"   # Cyan
+    ]
     # Fetch data for specified athlete IDs only
+    print(athletes)
     loc_data = read_loc_data(race_id, athletes)
     judge_calls_data = read_judge_calls_data(race_id, athletes)
     bib_data = read_bib_data()
@@ -69,18 +111,24 @@ def graphs(race_id=1, athletes=[]):
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
-    # Initialize figure for combined plot
+    # Initialize figure for plot
     p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
     
+    index = 0
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
+        runner_id = int(float(runner_id))
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
+
         if loc_data_runner.empty:
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
-
         athlete_color = get_unique_color(runner_id)
+        # athlete_color = get_unique_color(runner_id)
+        # Assign the color based on the athlete's index
+        athlete_color = predefined_colors[index]
+        index += 1
         name = loc_data_runner['FirstName'].iloc[0]
         surname = loc_data_runner['LastName'].iloc[0]
 
@@ -108,8 +156,8 @@ def graphs(race_id=1, athletes=[]):
 
         # Add judge call markers
         color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
-        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[]))
-
+        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
+        print(judge_calls_data)
         for _, row in judge_calls_data[judge_calls_data['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
             after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']].iloc[:1]
@@ -136,23 +184,39 @@ def graphs(race_id=1, athletes=[]):
                 judge_calls_source.data['text'].append('  Judge #' + str(row['IDJudge']))
                 judge_calls_source.data['color'].append(color)
                 judge_calls_source.data['shape'].append(shape)
-
-            p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
+                judge_calls_source.data['infraction'].append(row['Infraction'])
             p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
-
+            p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
+            p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
     p.legend.location = "top_left"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
-    # Create filename with race ID and each runner ID
-    runner_ids_str = "_".join(map(str, athletes))
-    filename = f"graphs/race_{race_id}/race_{race_id}_{runner_ids_str}_plot.png"
+    graph_dir = 'static\graphs' 
 
-    # Export the combined plot as a PNG
-    export_png(p, filename=filename)
-    print(f"Plot saved as {filename}")
+    if not os.path.exists(graph_dir):
+        os.makedirs(graph_dir)
 
-if __name__ == '__main__':
-    graphs(3, [100, 106, 108])
+    # file path
+    graph_path = os.path.join(graph_dir, f"graph_{race_id}.png")
+    export_png(p, filename=graph_path)
+
+    return graph_path
+
+
+@graphs_bp.route('/race/<int:race_id>', methods=['GET'])
+def graphs(race_id):
+    # If GET request, show the selection form
+    athletes = sorted(get_available_athletes(race_id))
+    return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
+
+
+@graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
+def generate_graph_route(race_id):
+    selected_athletes = request.args.getlist('selected_athletes')
+    graph_path = generate_graph(int(race_id), selected_athletes)
+    print(f"Graph saved at: {graph_path}")
+
+    return send_file(graph_path, mimetype='image/png')
