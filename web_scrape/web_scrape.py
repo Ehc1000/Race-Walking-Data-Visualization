@@ -4,13 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 import constants as c
 import utils as u
-
 import scrapedDataBase as db
 
 schema_path = os.path.join(os.path.dirname(__file__), "sql", "schema.sql")
@@ -18,6 +16,23 @@ db.init_db("scraped_data.db", schema_path)
 
 
 def set_up():
+    """
+    Sets up a headless Chrome WebDriver for web scraping.
+
+    This function configures the Chrome WebDriver with the necessary options,
+    including headless mode, and initializes it based on the current operating
+    system. The WebDriver then navigates to a predefined URL.
+
+    Returns:
+        WebDriver: An instance of the configured Chrome WebDriver.
+
+    Raises:
+        EnvironmentError: If the operating system is not supported (i.e., not Windows or macOS).
+    
+    Notes:
+        - The URL is currently hardcoded for the athlete "Alvaro Martin."
+        - The driver path must be configured in the 'constants' module under `c.DRIVER_PATHS`.
+    """
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     
@@ -35,6 +50,17 @@ def set_up():
     return driver
 
 def close_cookie_banner():
+    """
+    Handles the cookie banner on the webpage by clicking the 'Allow all cookies' button.
+
+    Raises:
+        Exception: Logs and handles any errors encountered while interacting with the cookie banner.
+
+    Notes:
+        - The cookie button is identified by its ID: "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll."
+        - This function assumes that the WebDriver instance (`driver`) is already initialized and
+          pointing to the appropriate webpage.
+    """
     try:
         cookie_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.ID, "CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll"))
@@ -45,6 +71,21 @@ def close_cookie_banner():
         u.log(f"Error closing cookie banner: {e}", "error")
 
 def get_profile_image():
+    """
+    Extracts the profile image URL of the athlete from the webpage.
+
+    Returns:
+        str: The URL of the athlete's profile image if found.
+        None: If the image could not be located or an error occurs.
+
+    Raises:
+        Exception: Logs and handles any exceptions encountered during the process.
+
+    Notes:
+        - The WebDriver instance (`driver`) is assumed to be initialized and pointed to
+          the appropriate webpage.
+        - The image is identified using an XPath query targeting the `alt` attribute.
+    """
     try:
         img_element = driver.find_element(By.XPATH, "//img[@alt='Athlete']")
         img_url = img_element.get_attribute("src")
@@ -52,10 +93,48 @@ def get_profile_image():
     except Exception as e:
         u.log(f"Error finding image: {e}", "error")
     return img_url
-    
-    
+
+def get_athlete_name():
+    """
+    Retrieves the athlete's full name from the webpage.
+
+    Returns:
+        str: The full name of the athlete if successfully retrieved.
+        None: If the name element is not found or an error occurs.
+
+    Raises:
+        Exception: Logs and handles any exceptions encountered while locating or processing the name element.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the appropriate webpage.
+        - The athlete's name is located using the `CLASS_NAME` selector "athletesBio_athletesBioTitle__3pPRL."
+    """
+    try:
+        name_div = WebDriverWait(driver, 20).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "athletesBio_athletesBioTitle__3pPRL"))
+        )
+        spans = name_div.find_elements(By.TAG_NAME, "span")
+        athlete_first_name = spans[0].text
+        athlete_last_name = spans[1].text
+        full_name = f"{athlete_first_name} {athlete_last_name}"
+        u.log(f"Athlete Name: {full_name}")
+        return full_name
+    except Exception as e:
+        u.log(f"Error finding Athlete Name: {e}", "error")
+        return None
 
 def click_statistics_button():
+    """
+    Clicks the 'STATISTICS' button on the webpage to access the statistics section.
+
+    Raises:
+        Exception: Logs and handles any exceptions encountered while interacting with the 'STATISTICS' button.
+
+    Notes:
+        - The WebDriver instance (`driver`) is assumed to be initialized and pointed to
+          the appropriate webpage.
+        - The button is located using an XPath query with the text 'STATISTICS.'
+    """
     try:
         statistics_button = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//button[text()='STATISTICS']")))
         statistics_button.click()
@@ -63,39 +142,27 @@ def click_statistics_button():
     except Exception as e:
         u.log(f"Error clicking 'STATISTICS' button: {e}", "error")
 
-def original_get_world_rankings():
-    try:
-        world_rankings_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[text()='World rankings']"))
-        )
-        world_rankings_button.click()
-        u.log("Successfully clicked 'World rankings' button.")
-
-        stats_section = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "athletesStatisticsTable_athletesStatisticsContent__dDNOs"))
-        )
-        event_sections = stats_section.find_elements(By.XPATH, 
-            "//div[contains(@class, 'athletesCardContainer')]"
-            " | //div[contains(text(), 'Race Walking')]"
-            " | //div[contains(text(), 'Ranking')]"
-        )
-
-        for event in event_sections:
-            event_titles = event.find_elements(By.CLASS_NAME, "profileStatistics_rankingCardTitle__2OeiW")
-            labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
-            values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
-
-            for event_title in event_titles:
-                u.log(f"Event Title: {event_title.text}")
-
-            for label, value in zip(labels, values):
-                u.log(f"{label.text}: {value.text}")
-
-    except Exception as e:
-        u.log(f"Error getting world rankings: {e}", "error")
-
-
 def get_world_rankings(athlete_id):
+    """
+    Scrapes and stores the athlete's world rankings for various events from the webpage.
+
+    This function clicks the 'World rankings' button, extracts ranking data for each event,
+    and stores the data in the database. It includes ranking position, ranking score, and
+    the number of weeks the athlete has held the ranking.
+
+    Parameters:
+        athlete_id (int): The unique ID of the athlete in the database to associate the rankings with.
+
+    Raises:
+        Exception: Logs and handles errors that occur while interacting with the rankings section or processing data.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the appropriate webpage.
+        - The function assumes that the database has a `db.insert_ranking` function to store the data.
+        - Data is extracted from elements with specific class names, such as 
+          "profileStatistics_rankingCardTitle__2OeiW" for titles and "athletesEventsDetails_athletesEventsDetailsLabel__6KN98"
+          for labels.
+    """
     try:
         # Click the "World rankings" button
         world_rankings_button = WebDriverWait(driver, 10).until(
@@ -150,108 +217,133 @@ def get_world_rankings(athlete_id):
     except Exception as e:
         u.log(f"Error getting world rankings: {e}", "error")
 
+def get_season_bests(): #TODO: implement
+    #TODO: click the dropdown list to iterate through all the years, no idea how
+    #athletesTitle_athletesTitle__388RT this has the card's race title
+    #profileStatistics_personnalBestCardWrapper__-09Nt -- this is the wrapper holding all the data
+    #profileStatistics_personnalBestCardContent__1GplY -- this has the race title, the date and flag name
+    return
 
+def get_personal_bests(athlete_id):
+    """
+    Scrapes and stores the athlete's personal bests for various events from the webpage.
 
-#athletesTitle_athletesTitle__388RT this has the card's race title
-#profileStatistics_personnalBestCardWrapper__-09Nt -- this is the wrapper holding all the data
-#profileStatistics_personnalBestCardContent__1GplY -- this has the race title, the date and flag name
+    This function clicks the 'Personal bests' button, extracts data for each event,
+    including performance time and score, and stores the data in the database.
 
-#TODO: click the dropdown list to iterate through all the years, no idea how
-def get_season_bests():
+    Parameters:
+        athlete_id (int): The unique ID of the athlete in the database to associate the personal bests with.
+
+    Raises:
+        Exception: Logs and handles any errors encountered while interacting with the personal bests section or processing data.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the appropriate webpage.
+        - The function assumes the database has a `db.insert_personal_best` function to store the data.
+        - Data is extracted from elements with specific class names, such as
+          "athletesTitle_athletesTitle__388RT" for event titles and "athletesEventsDetails_athletesEventsDetailsLabel__6KN98"
+          for labels.
+    """
     try:
-        # Click the "Season Bests" button
-        season_bests_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Season')]"))
-        )
-        season_bests_button.click()
-        u.log("Successfully clicked 'Season bests' button.")
-
-        # Wait for the card wrappers to load
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_all_elements_located((By.CLASS_NAME, "profileStatistics_personnalBestCardWrapper__-09Nt"))
-        )
-
-        # Retrieve all season best card wrappers
-        season_bests_wrappers = driver.find_elements(By.CLASS_NAME, "profileStatistics_personnalBestCardWrapper__-09Nt")
-
-        # Iterate through each card wrapper
-        for index, wrapper in enumerate(season_bests_wrappers, start=1):
-            u.log(f"Processing Season Bests Card #{index}")
-
-            # Extract the race title
-            race_titles = wrapper.find_elements(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")
-            for race_title in race_titles:
-                u.log(f"Race Title: {race_title.text}")
-
-            # Extract race details (assumed to contain race name, date, and flag)
-            race_details = wrapper.find_elements(By.CLASS_NAME, "profileStatistics_personnalBestCardContent__1GplY")
-            for detail in race_details:
-                # Split details text by line and label each part
-                detail_lines = detail.text.splitlines()
-                
-                if len(detail_lines) > 0:
-                    u.log(f"Race Name: {detail_lines[0]}")
-                if len(detail_lines) > 1:
-                    u.log(f"Date: {detail_lines[1]}")
-                if len(detail_lines) > 2:
-                    u.log(f"Flag/Country: {detail_lines[2]}")
-
-    except Exception as e:
-        u.log(f"Error getting season bests: {e}", "error")
-
-def get_personal_bests():
-    try:
+        # Click the "Personal bests" button
         personal_bests_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='Personal bests']"))
         )
         personal_bests_button.click()
         u.log("Successfully clicked 'Personal Bests' button.")
 
+        # Wait for the statistics section to load
         stats_section = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "athletesStatisticsTable_athletesStatisticsContent__dDNOs"))
         )
+
+        # Find event sections
         event_sections = stats_section.find_elements(By.XPATH, 
             "//div[contains(@class, 'athletesCardContainer')]"
-            " | //div[contains(text(), 'Race Walk')]"
-            " | //div[contains(text(), 'Ranking')]"
         )
 
+        # Iterate through each event section
         for event in event_sections:
-            event_titles = event.find_elements(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")
-            labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
-            values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
+            try:
+                # Extract event title
+                event_title_element = event.find_element(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")
+                event_title = event_title_element.text
 
-            for event_title in event_titles:
-                u.log(f"Event Title: {event_title.text}")
+                # Extract labels and values
+                labels = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsLabel__6KN98")
+                values = event.find_elements(By.CLASS_NAME, "athletesEventsDetails_athletesEventsDetailsValue__FrHFZ")
 
-            for label, value in zip(labels, values):
-                u.log(f"{label.text}: {value.text}")
+                performance_time = None
+                performance_score = None
 
+                # Match labels to extract specific data
+                for label, value in zip(labels, values):
+                    if label.text == "Performance":
+                        performance_time = value.text
+                    elif label.text == "Score":
+                        performance_score = int(value.text)
+
+                # Log extracted data
+                u.log(f"Extracted personal best data:")
+                u.log(f"  Event Title: {event_title}")
+                u.log(f"  Performance Time: {performance_time}")
+                u.log(f"  Performance Score: {performance_score}")
+
+                # Insert personal bests into the database
+                db.insert_personal_best("scraped_data.db", athlete_id, event_title, performance_time, performance_score)
+            except Exception as inner_e:
+                u.log(f"Error processing personal best for event: {inner_e}", "error")
+
+        u.log("Successfully stored all personal bests.")
     except Exception as e:
-        u.log(f"Error getting Personal Bests: {e}", "error")
+        u.log(f"Error getting personal bests: {e}", "error")
 
-#TODO: For some reason Row 9 of Table 1 always has missing data???
-def get_progression():
+def get_progression(athlete_id): #BUG: For some reason Row 9 of Table 1 always has missing data???
+    """
+    Scrapes and stores the athlete's progression data from the webpage.
+
+    This function clicks the 'Progression' button, extracts progression data for various events,
+    and stores it in the database. The data includes year, time, race name, and date for each event.
+
+    Parameters:
+        athlete_id (int): The unique ID of the athlete in the database to associate the progression data with.
+
+    Raises:
+        Exception: Logs and handles any errors encountered while interacting with the progression section
+                   or processing data.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the appropriate webpage.
+        - The function assumes the database has a `db.insert_progression` function to store the data.
+        - Data is extracted from elements with specific class names, such as
+          "profileStatistics_tableBody__1w5O9" for table rows and "athletesTitle_athletesTitle__388RT"
+          for table titles.
+    """
     try:
+        # Click the "Progression" button
         progression_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='Progression']"))
         )
         progression_button.click()
         u.log("Successfully clicked 'Progression' button.")
 
+        # Wait for the table elements to load
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "profileStatistics_table__1o71p"))
         )
-        
+
+        # Labels for progression data
         labels = ["YEAR", "TIME", "RACE", "DATE"]
 
-        # Get all global titles, skipping the first as it's not useful for individual tables
+        # Get all global titles, skipping the first one
         global_titles = driver.find_elements(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")
         global_title_texts = [title.text for title in global_titles][1:]  # Skip the first title
         u.log(f"Global titles found on page (skipping first): {global_title_texts}")
 
-        tables = driver.find_elements(By.CLASS_NAME, "profileStatistics_table__1o71p")[:-1]  # Skip the last table, it's out of scope for this func.
+        # Find all progression tables (excluding the last one, which is unrelated)
+        tables = driver.find_elements(By.CLASS_NAME, "profileStatistics_table__1o71p")[:-1]
 
+        # Process each table
         for table_index, table in enumerate(tables):
             table_title = global_title_texts[table_index] if table_index < len(global_title_texts) else "Unknown Title"
             u.log(f"Extracting data from table '{table_title}'...")
@@ -260,74 +352,130 @@ def get_progression():
             rows = table_body.find_elements(By.TAG_NAME, "tr")
 
             for row_index, row in enumerate(rows):
-                td_elements = row.find_elements(By.TAG_NAME, "td")
-            
-                row_data = {label: td.text for label, td in zip(labels, td_elements)}
-                u.log(f"Row {row_index + 1} Data for '{table_title}': {row_data}")
+                try:
+                    # Extract data from table cells
+                    td_elements = row.find_elements(By.TAG_NAME, "td")
+                    row_data = {label: td.text for label, td in zip(labels, td_elements)}
 
+                    # Parse year as an integer
+                    year = int(row_data["YEAR"]) if row_data["YEAR"].isdigit() else None
+                    time = row_data["TIME"]
+                    race_name = row_data["RACE"]
+                    date = row_data["DATE"]
+
+                    # Log extracted data
+                    u.log(f"Row {row_index + 1} Data for '{table_title}':")
+                    u.log(f"  Year: {year}, Time: {time}, Race Name: {race_name}, Date: {date}")
+
+                    # Insert progression data into the database
+                    db.insert_progression(
+                        "scraped_data.db", athlete_id, table_title, year, time, race_name, date
+                    )
+                except Exception as row_error:
+                    u.log(f"Error processing row {row_index + 1} in table '{table_title}': {row_error}", "error")
     except Exception as e:
         u.log(f"Error getting progression data: {e}", "error")
 
-
 #def get_results() #TODO: implement
 
-#Event title: athletesTitle_athletesTitle__388RT
-# Table body: profileStatistics_tableBody__1w5O9. It has the data in this order: placement, race title, date
-# Click this dropdown button to get more data: athletesDropdownButton_athletesDropdownButton__3k-Ds
-# Data in this dropdown class: profileStatistics_trDropdownContent__21lVN, has Mark, Venue, Competition.
+def get_honours(athlete_id):
+    """
+    Scrapes and stores the athlete's honours data from the webpage.
 
-#TODO: need to somehow click the dropdown carrot to get mark, venue and competition data.
-def get_honours():
+    This function clicks the 'Honours' button, extracts honours data for various events,
+    including placement, race title, and date, and stores the data in the database.
+
+    Parameters:
+        athlete_id (int): The unique ID of the athlete in the database to associate the honours data with.
+
+    Raises:
+        Exception: Logs and handles any errors encountered while interacting with the honours section
+                   or processing data.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the appropriate webpage.
+        - The function assumes the database has a `db.insert_honor` function to store the data.
+        - Data is extracted from elements with specific class names, such as
+          "profileStatistics_tableBody__1w5O9" for table rows and "athletesTitle_athletesTitle__388RT"
+          for event titles.
+        - The function skips the first and last event titles and honours table body, which are assumed to be unrelated.
+    """
     try:
+        # Click the "Honours" button
         honours_button = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH, "//button[text()='Honours']"))
         )
         honours_button.click()
         u.log("Successfully clicked 'Honours' button.")
 
+        # Wait for the honours table to load
         WebDriverWait(driver, 10).until(
             EC.presence_of_all_elements_located((By.CLASS_NAME, "profileStatistics_tableBody__1w5O9"))
         )
 
+        # Get event titles and table bodies
         event_titles = driver.find_elements(By.CLASS_NAME, "athletesTitle_athletesTitle__388RT")[1:-1]
         table_bodies = driver.find_elements(By.CLASS_NAME, "profileStatistics_tableBody__1w5O9")[:-1]
 
-        # Loop through each title-table pair, excluding the last table
+        # Loop through each title-table pair
         for index, (event_title, table_body) in enumerate(zip(event_titles, table_bodies), start=1):
             u.log(f"Processing Table #{index} with Event Title: {event_title.text}")
 
             rows = table_body.find_elements(By.TAG_NAME, "tr")
 
-            labels = ["Placement", "Race Title", "Date"]
-
+            # Process each row in the table
             for row_index, row in enumerate(rows):
-                td_elements = row.find_elements(By.TAG_NAME, "td")
-                row_data = {label: td.text for label, td in zip(labels, td_elements)}
-                u.log(f"Row {row_index + 1} Data for '{event_title.text}': {row_data}")
+                try:
+                    # Extract row data
+                    td_elements = row.find_elements(By.TAG_NAME, "td")
+                    placement = int(td_elements[0].text) if td_elements[0].text.isdigit() else None
+                    race_title = td_elements[1].text
+                    date = td_elements[2].text
 
+                    # Insert the data into the database
+                    db.insert_honor(
+                        "scraped_data.db",
+                        athlete_id,
+                        event_title.text,
+                        placement,
+                        race_title,
+                        date
+                    )
+
+                    u.log(f"Inserted honour data for '{event_title.text}', row {row_index + 1}.")
+                except Exception as row_error:
+                    u.log(f"Error processing row {row_index + 1} in table '{event_title.text}': {row_error}", "error")
     except Exception as e:
         u.log(f"Error getting honours data: {e}", "error")
 
-def get_athlete_name(driver):
-    try:
-        # Wait for the element to be present
-        name_div = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "athletesBio_athletesBioTitle__3pPRL"))
-        )
-        spans = name_div.find_elements(By.TAG_NAME, "span")
-        athlete_first_name = spans[0].text
-        athlete_last_name = spans[1].text
-        full_name = f"{athlete_first_name} {athlete_last_name}"
-        u.log(f"Athlete Name: {full_name}")
-        return full_name
-    except Exception as e:
-        u.log(f"Error finding Athlete Name: {e}", "error")
-        return None
-    
+def scrape_athlete_data():
+    """
+    Scrapes and stores comprehensive athlete data from the webpage.
 
-def scrape_athlete_data(driver): #--------------- This currently scrapes the athlethe basic info and the rankings (separate linked tables)
+    This function collects basic athlete information (name and profile image) and additional
+    detailed statistics, including world rankings, personal bests, progression data, and honours.
+    The scraped data is stored in a database, with each category linked to the athlete's unique ID.
+
+    Workflow:
+        1. Extract athlete name and profile image.
+        2. Insert the athlete into the database to retrieve a unique `athlete_id`.
+        3. Scrape and store:
+            - World rankings
+            - Personal bests
+            - Progression data
+            - Honours
+        4. Log progress and handle errors gracefully.
+
+    Raises:
+        Exception: Logs and handles errors that may occur during any stage of the scraping process.
+
+    Notes:
+        - The WebDriver instance (`driver`) must be initialized and pointed to the athlete's webpage.
+        - The function assumes the existence of database functions to store the data, such as
+          `db.insert_athlete`, `db.insert_ranking`, and similar functions for other data categories.
+    """
     # Step 1: Get athlete name and profile image
-    full_name = get_athlete_name(driver)
+    full_name = get_athlete_name()
     profile_image_url = get_profile_image()
 
     if full_name:
@@ -337,19 +485,27 @@ def scrape_athlete_data(driver): #--------------- This currently scrapes the ath
         # Step 3: Collect and store data
         click_statistics_button()
         get_world_rankings(athlete_id)
-        # Add calls to get_season_bests, get_personal_bests, etc.
+        # get_season_bests() ??
+        get_personal_bests(athlete_id)
+        get_progression(athlete_id)
+        #get_results() ??
+        get_honours(athlete_id)
+
+        #TODO: Implement commented functions
 
         u.log(f"Successfully scraped and stored data for {full_name}.")
     else:
         u.log("Failed to retrieve athlete name. Skipping data scraping.", "error")
 
 
-
 #Testing
-driver = set_up()
-close_cookie_banner()
-scrape_athlete_data(driver)
-db.display_table("scraped_data.db", "athletes")
-db.display_table("scraped_data.db", "rankings")
-driver.quit()
-
+if __name__ == "main":
+    driver = set_up()
+    close_cookie_banner()
+    scrape_athlete_data()
+    db.display_table("scraped_data.db", "athletes")
+    db.display_table("scraped_data.db", "rankings")
+    db.display_table("scraped_data.db", "personal_bests")
+    db.display_table("scraped_data.db", "progressions")
+    db.display_table("scraped_data.db", "honors")
+    driver.quit()

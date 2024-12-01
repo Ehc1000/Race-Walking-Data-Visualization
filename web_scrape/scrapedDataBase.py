@@ -125,8 +125,9 @@ def display_table(db_file, table_name):
     """
     Display all data from the specified table.
     """
+    print(f"{table_name}")
     db_path = os.path.join(DB_FOLDER, db_file)
     with sql.connect(db_path) as conn:
         df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
-    print(df)
+    print(f"{df}\n")
     return df
