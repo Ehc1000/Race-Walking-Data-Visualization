@@ -8,5 +8,4 @@ this is already done, but for actual release/deploy, we'll have to add actual in
 
 pip install selenium
 
-
-## Notes
+THIS IS A TEMPORARY FILE
