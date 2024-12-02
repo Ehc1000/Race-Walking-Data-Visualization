@@ -6,18 +6,19 @@ import pandas as pd
 
 # https://docs.python.org/3/library/sqlite3.html
 
-QUERY_FOLDER = 'sql'
-LABELED_QUERY_FOLDER = 'sql-named-parameters'
-DB_FOLDER = ''
+QUERY_FOLDER = 'sql/'
+LABELED_QUERY_FOLDER = 'sql-named-parameters/'
+DB_FOLDER = 'db/'
 
 PARAMETER_DEFAULTS = {"race_id": 6}
+
 
 # NORMAL QUERY OPERATIONS
 
 def df_from_query(query_file, db_file, params=()):
-    with open(f'{QUERY_FOLDER}/{query_file}', 'r') as sql_file:
+    with open(f'{QUERY_FOLDER}{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
-    with sql.connect(f'{DB_FOLDER}{db_file}') as conn:
+    with sql.connect(f'{DB_FOLDER}/{db_file}') as conn:
         df = pd.read_sql_query(sql_query, conn, params=params)
     return df
 
@@ -27,7 +28,7 @@ def get_all_queries():
 
 
 def get_parameter_count(query_file):
-    with open(f'{QUERY_FOLDER}/{query_file}', 'r') as sql_file:
+    with open(f'{QUERY_FOLDER}{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
     return sql_query.count('?')
 
@@ -42,7 +43,7 @@ def df_from_labeled_query(query_file, db_file, params=None):
     # of that yellow underline, and do it like this:
     if params is None:
         params = {}
-    with open(f'{LABELED_QUERY_FOLDER}/{query_file}', 'r') as sql_file:
+    with open(f'{LABELED_QUERY_FOLDER}{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
     with sql.connect(f'{DB_FOLDER}{db_file}') as conn:
         df = pd.read_sql_query(sql_query, conn, params=params)
@@ -54,7 +55,7 @@ def get_all_labeled_queries():
 
 
 def get_sql_parameters(query_file):
-    with open(f'{LABELED_QUERY_FOLDER}/{query_file}', 'r') as sql_file:
+    with open(f'{LABELED_QUERY_FOLDER}{query_file}', 'r') as sql_file:
         sql_query = sql_file.read()
     # since let's be honest, none of us have regex memorized, let's be specific here:
     # this regex searches for all strings starting with colons, followed by a word that is
