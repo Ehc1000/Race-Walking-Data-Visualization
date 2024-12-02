@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Race Walking Data Visualizer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            margin: 0;
+        }
+
+        .navbar-container {
+            height: 100vh;
+            background-color: #f8f9fa;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 250px;
+            overflow-y: auto;
+        }
+
+        .content-container {
+            margin-left: 250px;
+            flex: 1;
+            padding: 1rem;
+        }
+
+    </style>
+    {% block head_bottom %}
+    {% endblock %}
+</head>
+<body>
+<div class="navbar-container">
+    <nav class="navbar navbar-expand-md navbar-light bg-light flex-column flex-shrink-0 p-3">
+        <a href="/" class="navbar-brand mb-3">Race Walking</a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="/data" class="nav-link {% if request.path == '/data' %}active{% endif %}">
+                    Data Modifier
+                </a>
+            </li>
+            <li>
+                <a href="/tables" class="nav-link {% if request.path == '/tables' %}active{% endif %}">
+                    Data Tables
+                </a>
+            </li>
+            <li>
+                <a href="/graphs/race/1" class="nav-link {% if request.path == '/graphs/race/1' %}active{% endif %}">
+                    Data Graphs
+                </a>
+            </li>
+            <li>
+                <a href="/webscraper" class="nav-link {% if request.path == '/webscraper' %}active{% endif %}">
+                    Web Scraper
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>
+
+<div class="content-container">
+    {% block content %}
+    {% endblock %}
+</div>
+
+<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

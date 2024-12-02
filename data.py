@@ -6,7 +6,7 @@ data_bp = Blueprint("data", __name__)
 
 @data_bp.route("/")
 def data():
-    db_file = request.args.get("db", "RWComplete.db")
+    db_file = request.args.get('db', 'db/RWComplete.db')
     with sql.connect(db_file) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
