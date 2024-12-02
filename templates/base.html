@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Race Walking Data Visualizer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='tables.css') }}">
+</head>
+<body>
+<div class="d-flex">
+    <nav class="navbar navbar-expand-md navbar-light bg-light flex-column flex-shrink-0 p-3" style="width: 250px;">
+        <a href="/" class="navbar-brand mb-3">Race Walking</a>
+        <ul class="nav nav-pills flex-column mb-auto">
+            <li class="nav-item">
+                <a href="/data" class="nav-link {% if request.path == '/data' %}{% endif %}">
+                    Data Modifier
+                </a>
+            </li>
+            <li>
+                <a href="/tables" class="nav-link {% if request.path == '/tables' %}{% endif %}">
+                    Data Tables
+                </a>
+            </li>
+            <li>
+                <a href="/graphs" class="nav-link {% if request.path == '/graphs' %}{% endif %}">
+                    Data Graphs
+                </a>
+            </li>
+            <li>
+                <a href="/webscraper" class="nav-link {% if request.path == '/webscraper' %}{% endif %}">
+                    Web Scraper
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container-fluid p-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>

@@ -21,7 +21,8 @@ def generate_table():
     query_params = request.args.to_dict()
     query_file = query_params.pop("query", "AthleteInfractions.sql")
     db_file = query_params.pop("db", "RWComplete.db")
-    table_style = query_params.pop("style", "default-style")
+    table_style = query_params.pop("style", "table")
+
     # collects all the needed named parameter values for the query, setting to a default if not specified
     # in the http request query params
     needed_params = cmn.get_labeled_sql_parameters(query_file)
@@ -47,8 +48,12 @@ def download_pdf():
     pdf_name = f"{db_file}_{query_file}_{table_style}.pdf"
     pdf_output_path = f"{cmn.TMP_FOLDER}{pdf_name}"
     os.makedirs(cmn.TMP_FOLDER, exist_ok=True)
-    css_path = "static/tables.css"
-    pdfkit.from_string(html_table, pdf_output_path, css=css_path)
+    css_files = [
+        "static/bootstrap/css/bootstrap.css",
+        "static/tables.css"
+    ]
+
+    pdfkit.from_string(html_table, pdf_output_path, css=css_files)
     return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
 
 
@@ -57,6 +62,12 @@ def display_table():
     needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
     query_options = cmn.get_all_labeled_queries()
     db_options = cmn.get_dbs()
+    races = cmn.df_from_labeled_query("AllRaces.sql", "RWComplete.db").to_dict(orient="records")
+
+    query_params = {k: str(v) for k, v in query_params.items() if v is not None}
+    for race in races:
+        race['IDRace'] = str(race['IDRace'])
+
     return render_template(
         "tables.html",
         table=html_table,
@@ -66,7 +77,8 @@ def display_table():
         db_options=db_options,
         query_options=query_options,
         needed_parameters=needed_params,
-        query_params=query_params
+        query_params=query_params,
+        races=races
     )
 
 

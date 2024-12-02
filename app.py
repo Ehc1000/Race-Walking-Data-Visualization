@@ -24,7 +24,7 @@ app.register_blueprint(webscraper_bp, url_prefix='/webscraper')
 # of the root app.
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('base.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,73 +1,103 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Table Page!</title>
-    <link rel="stylesheet" href="{{ url_for("static", filename="tables.css") }}">
-</head>
-<body>
+{% extends "base.html" %}
 
-<label for="style-select">Choose a style:</label>
-<select id="style-select" onchange="updateQueryParams('style', this.value)">
-    <option value="default-style" {% if table_style == "default-style" %}selected{% endif %}>Default</option>
-    <option value="striped" {% if table_style == "striped" %}selected{% endif %}>Striped</option>
-    <option value="bordered" {% if table_style == "bordered" %}selected{% endif %}>Bordered</option>
-    <option value="highlighted" {% if table_style == "highlighted" %}selected{% endif %}>Highlighted</option>
-    <option value="modern" {% if table_style == "modern" %}selected{% endif %}>Modern</option>
-</select>
-<br>
+{% block title %}Table Page{% endblock %}
 
-<label for="db-select">Choose a database:</label>
-<select id="db-select" onchange="updateQueryParams('db', this.value)">
-    {% for db in db_options %}
-        <option value="{{ db }}" {% if db_file == db %}selected{% endif %}>{{ db }}</option>
-    {% endfor %}
-</select>
-<br>
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center">Table Page</h1>
 
-<label for="query-select">Choose a query:</label>
-<select id="query-select" onchange="updateQueryParams('query', this.value)">
-    {% for query in query_options %}
-        <option value="{{ query }}" {% if query_file == query %}selected{% endif %}>{{ query }}</option>
-    {% endfor %}
-</select>
-<br>
+    <div class="card p-4 mb-4">
+        <div class="row g-3">
+            <!-- database selector -->
+            <div class="col-md-4">
+                <label for="db-select" class="form-label">Choose a database:</label>
+                <select id="db-select" class="form-select" onchange="updateQueryParams('db', this.value)">
+                    {% for db in db_options %}
+                        <option value="{{ db }}" {% if db_file == db %}selected{% endif %}>{{ db }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-{% if needed_parameters %}
-    <div id="parameter-container">
-        <h4>Enter query parameters:</h4>
-        {% for param in needed_parameters %}
-            <label for="{{ param }}">{{ param }}:</label>
-            <input type="text" id="{{ param }}" name="{{ param }}" value="{{ query_params.get(param, "") }}"
-                   onchange="updateQueryParams('{{ param }}', this.value)">
-            <br>
-        {% endfor %}
+            <!-- query selector -->
+            <div class="col-md-4">
+                <label for="query-select" class="form-label">Choose a query:</label>
+                <select id="query-select" class="form-select" onchange="updateQueryParams('query', this.value)">
+                    {% for query in query_options %}
+                        <option value="{{ query }}" {% if query_file == query %}selected{% endif %}>{{ query }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Style Selector -->
+            <div class="col-md-4">
+                <label for="style-select" class="form-label">Choose a style:</label>
+                <select id="style-select" class="form-select" onchange="updateQueryParams('style', this.value)">
+                    <option value="default-style" {% if table_style == "default-style" %}selected{% endif %}>Default</option>
+                    <option value="striped" {% if table_style == "striped" %}selected{% endif %}>Striped</option>
+                    <option value="bordered" {% if table_style == "bordered" %}selected{% endif %}>Bordered</option>
+                    <option value="highlighted" {% if table_style == "highlighted" %}selected{% endif %}>Highlighted</option>
+                    <option value="modern" {% if table_style == "modern" %}selected{% endif %}>Modern</option>
+                    <option value="table" {% if table_style == "table" %}selected{% endif %}>Bootstrap</option>
+                </select>
+            </div>
+        </div>
     </div>
-    <br>
-{% endif %}
 
-<form action="{{ url_for("tables.download_pdf") }}" method="get">
-    <input type="hidden" name="query" value="{{ query_file }}">
-    <input type="hidden" name="db" value="{{ db_file }}">
-    <input type="hidden" name="style" value="{{ table_style }}">
-    {% for param, value in query_params.items() %}
-        <input type="hidden" name="{{ param }}" value="{{ value }}">
-    {% endfor %}
-    <button type="submit">Download PDF</button>
-</form>
-<br>
+    {% if needed_parameters %}
+        <div class="card p-4 mb-4">
+            <div id="parameter-container">
+                {% for param in needed_parameters %}
+                    {% if param == "race_id" %}
+                        <!-- Special handling for race_id since we can make it nicer. -->
+                        <div class="mb-3">
+                            <label for="race-select" class="form-label">Choose a race:</label>
+                            <select id="race-select" class="form-select"
+                                    onchange="updateQueryParams('{{ param }}', this.value)">
+                                {% for race in races %}
+                                    <option value="{{ race['IDRace'] }}"
+                                            {% if query_params.get(param) == race['IDRace'] %}selected{% endif %}>
+                                        {{ race['RaceCity'] }} - {{ race['RaceDate'] }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    {% else %}
+                        <!-- Default handling for other parameters in case they ever exist in the future. -->
+                        <div class="mb-3">
+                            <label for="{{ param }}" class="form-label">{{ param | capitalize }}:</label>
+                            <input type="text" id="{{ param }}" name="{{ param }}" class="form-control"
+                                   value="{{ query_params.get(param, "") }}"
+                                   onchange="updateQueryParams('{{ param }}', this.value)">
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
 
-<div id="table-container">
-    {{ table | safe }}
+    <div class="card p-4 mb-4">
+        <form action="{{ url_for("tables.download_pdf") }}" method="get">
+            <input type="hidden" name="query" value="{{ query_file }}">
+            <input type="hidden" name="db" value="{{ db_file }}">
+            <input type="hidden" name="style" value="{{ table_style }}">
+            {% for param, value in query_params.items() %}
+                <input type="hidden" name="{{ param }}" value="{{ value }}">
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Download PDF</button>
+        </form>
+    </div>
+
+    <div id="table-container" class="card p-4">
+        {{ table | safe }}
+    </div>
 </div>
 
 <script>
-    // it would be technically be better if changing the style didn't reload the whole page, but who cares
+    // it would be technically better if changing the style didn't reload the whole page, but who cares
     function updateQueryParams(key, value) {
         const url = new URL(window.location.href);
         url.searchParams.set(key, value);
         window.location.href = url.toString();
     }
 </script>
-</body>
-</html>
+{% endblock %}
