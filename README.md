@@ -39,7 +39,7 @@ Data is gathered using the Selenium library for web scraping on the [World Athle
 
 
 ### **Data Visualization**
-We prioritize intuitive and informative data representation by leveraging popular Python libraries like... 
+We prioritize intuitive and informative data representation by leveraging the popular Python library Bokeh. By utilizing Bokeh, we're able to dynamically generate graphs with various parameters to provide a large range of visualizations.
 
 ### **User-Friendly Interface**
 The web interface is designed with simplicity in mind...
