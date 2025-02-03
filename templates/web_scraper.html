@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Scraped Data{% endblock %}
+
+{% block head_bottom %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+
+        h2 {
+            margin-top: 40px;
+            color: #333;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Scraped Data</h1>
+
+    <!-- Average Times Table -->
+    <h2>Average Times by Event</h2>
+    {% if average_times %}
+        <table>
+            <thead>
+            <tr>
+                <th>Event</th>
+                <th>Average Time</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in average_times %}
+                <tr>
+                    <td>{{ row.event_title }}</td>
+                    <td>{{ row.AverageTime }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No average times available.</p>
+    {% endif %}
+
+    <!-- Athletes Table -->
+    <h2>Athletes</h2>
+    {% if athletes %}
+        <table>
+            <thead>
+            <tr>
+                {% for col in athletes[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in athletes %}
+                <tr>
+                    {% for value in row.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for athletes.</p>
+    {% endif %}
+
+    <!-- Rankings Table -->
+    <h2>Rankings</h2>
+    {% if rankings %}
+        <table>
+            <thead>
+            <tr>
+                {% for col in rankings[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in rankings %}
+                <tr>
+                    {% for value in row.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for rankings.</p>
+    {% endif %}
+
+    <!-- Personal Bests Table -->
+    <h2>Personal Bests</h2>
+    {% if personal_bests %}
+        <table>
+            <thead>
+            <tr>
+                {% for col in personal_bests[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in personal_bests %}
+                <tr>
+                    {% for value in row.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for personal bests.</p>
+    {% endif %}
+
+    <!-- Progressions Table -->
+    <h2>Progressions</h2>
+    {% if progressions %}
+        <table>
+            <thead>
+            <tr>
+                {% for col in progressions[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in progressions %}
+                <tr>
+                    {% for value in row.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for progressions.</p>
+    {% endif %}
+
+    <!-- Honors Table -->
+    <h2>Honors</h2>
+    {% if honors %}
+        <table>
+            <thead>
+            <tr>
+                {% for col in honors[0].keys() %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for row in honors %}
+                <tr>
+                    {% for value in row.values() %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for honors.</p>
+    {% endif %}
+{% endblock %}

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 from flask import Blueprint, redirect, render_template, render_template_string, request, send_file
+=======
+from flask import Blueprint, render_template, request, send_file
+>>>>>>> main
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
@@ -16,6 +20,7 @@ graphs_bp = Blueprint('graphs', __name__)
 # Database connection
 conn = sqlite3.connect('DrexelRaceWalking.db', check_same_thread=False)
 
+
 def read_loc_data(race_id, athlete_ids):
     athlete_ids_str = ",".join(map(str, athlete_ids))
     query = f'''
@@ -28,15 +33,18 @@ def read_loc_data(race_id, athlete_ids):
     data.columns = ["ID", "IDRace", 'BibNumber', 'LOC', 'KneeAngle', 'Time']
     return data
 
+
 def read_bib_data():
     data = pd.read_sql('SELECT "IDAthlete", "BibNumber" FROM Bib LIMIT 96', conn)
     data.columns = ['ID', 'BibNumber']
     return data
 
+
 def read_id_data():
     data = pd.read_sql('SELECT "IDAthlete", "FirstName", "LastName" FROM Athlete', conn)
     data.columns = ['ID', 'FirstName', 'LastName']
     return data
+
 
 def read_judge_calls_data(race_id, athlete_ids):
     athlete_ids_str = ",".join(map(str, athlete_ids))
@@ -49,6 +57,10 @@ def read_judge_calls_data(race_id, athlete_ids):
     data = pd.read_sql(query, conn)
     return data
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
 def get_available_athletes(race_id):
     query = f'''
         SELECT DISTINCT BibNumber 
@@ -64,9 +76,18 @@ def get_available_athletes(race_id):
     # Return a list of BibNumbers
     return data['BibNumber'].tolist()
 
+<<<<<<< HEAD
 predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 athlete_to_color = {}
+=======
+
+predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+                     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
+athlete_to_color = {}
+
+
+>>>>>>> main
 # predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
 #                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 # athlete_to_color = {}
@@ -76,6 +97,11 @@ def get_unique_color(runner_id):
     if runner_id not in athlete_to_color:
         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
     return athlete_to_color[runner_id]
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> main
 # # Function to generate unique colors for each athlete
 # def get_unique_color(runner_id):
 #     if runner_id not in athlete_to_color:
@@ -96,7 +122,11 @@ def generate_graph(race_id: int, athletes):
         "#e377c2",  # Pink
         "#7f7f7f",  # Gray
         "#bcbd22",  # Yellow-green
+<<<<<<< HEAD
         "#17becf"   # Cyan
+=======
+        "#17becf"  # Cyan
+>>>>>>> main
     ]
     # Fetch data for specified athlete IDs only
     print(athletes)
@@ -112,8 +142,14 @@ def generate_graph(race_id: int, athletes):
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
     # Initialize figure for plot
+<<<<<<< HEAD
     p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
     
+=======
+    p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920,
+               height=940)
+
+>>>>>>> main
     index = 0
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
@@ -194,7 +230,11 @@ def generate_graph(race_id: int, athletes):
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
+<<<<<<< HEAD
     graph_dir = 'static\graphs' 
+=======
+    graph_dir = 'static/graphs'
+>>>>>>> main
 
     if not os.path.exists(graph_dir):
         os.makedirs(graph_dir)
@@ -212,6 +252,7 @@ def graphs(race_id):
     athletes = sorted(get_available_athletes(race_id))
     return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
 
+<<<<<<< HEAD
 
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
 def generate_graph_route(race_id):
@@ -295,3 +336,13 @@ def remove_athletes():
             <option value="{{ athlete }}">{{ athlete }}</option>
         {% endfor %}
     ''', available_items=available_items, selected_items=selected_items)
+=======
+
+@graphs_bp.route('/generate_graph/<int:race_id>', methods=['GET'])
+def generate_graph_route(race_id):
+    selected_athletes = request.args.getlist('selected_athletes')
+    graph_path = generate_graph(int(race_id), selected_athletes)
+    print(f"Graph saved at: {graph_path}")
+
+    return send_file(graph_path, mimetype='image/png')
+>>>>>>> main

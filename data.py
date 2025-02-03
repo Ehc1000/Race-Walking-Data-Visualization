@@ -6,11 +6,12 @@ data_bp = Blueprint("data", __name__)
 
 @data_bp.route("/")
 def data():
-    db_file = request.args.get("db", "RWComplete.db")
+    db_file = request.args.get('db', 'db/RWComplete.db')
     with sql.connect(db_file) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = [table[0] for table in cursor.fetchall()]
+        tables = [table[0] for table in cursor.fetchall() if ('Old' not in table[0]) and ('Backup' not in table[0])]
+        tables.sort()
     return render_template("db_view.html", tables=tables)
 
 

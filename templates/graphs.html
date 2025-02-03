@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,21 +7,37 @@
     <link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.css" rel="stylesheet" type="text/css">
     <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js"></script>
     <script src="https://unpkg.com/htmx.org"></script>
+=======
+{% extends "base.html" %}
+{% block title %}Race Graph{% endblock %}
+{% block head_bottom %}
+    <link href="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.4.3.min.js"></script>
+>>>>>>> main
     <style>
         .dual-list-box {
             display: flex;
             align-items: center;
             gap: 20px;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
         .list-box {
             width: 150px;
             height: 200px;
         }
+<<<<<<< HEAD
+=======
+
+>>>>>>> main
         .buttons {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
+<<<<<<< HEAD
     </style>
 </head>
 <body>
@@ -98,3 +115,102 @@
     </script>
 </body>
 </html>
+=======
+
+        .nav-links {
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            margin-right: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h1>Race {{ race_id }} Graph Generator</h1>
+
+    <div class="nav-links">
+        <a href="{{ url_for('graphs.graphs', race_id=1) }}">Race 1</a>
+        <a href="{{ url_for('graphs.graphs', race_id=2) }}">Race 2</a>
+        <a href="{{ url_for('graphs.graphs', race_id=3) }}">Race 3</a>
+    </div>
+
+    <form action="{{ url_for('graphs.generate_graph_route', race_id=race_id) }}" method="GET" target="_blank"
+          onsubmit="openGraphInNewTab(event)">
+        <div class="dual-list-box">
+            <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
+                {% for athlete_id in athlete_ids %}
+                    <option value="{{ athlete_id }}">{{ athlete_id | int }}</option>
+                {% endfor %}
+            </select>
+
+            <div class="buttons">
+                <button type="button" onclick="moveToSelected()">→</button>
+                <button type="button" onclick="moveToAvailable()">←</button>
+                <button type="button" onclick="moveAll()">Move All</button>
+            </div>
+
+            <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
+            </select>
+        </div>
+
+        <button type="submit">Generate Graph</button>
+    </form>
+
+    <script>
+        function openGraphInNewTab(event) {
+            event.preventDefault();
+
+            const form = event.target;
+            const actionUrl = form.action + '?' + new URLSearchParams(new FormData(form)).toString();
+
+            // Open the new tab with the generated graph
+            window.open(actionUrl, '_blank');
+        }
+
+        function moveToSelected() {
+            const available = document.getElementById('availableAthletes');
+            const selected = document.getElementById('selectedAthletes');
+            const selectedOptions = [...available.selectedOptions];
+
+            selectedOptions.forEach(option => {
+                selected.add(option);
+            });
+        }
+
+        function moveToAvailable() {
+            const available = document.getElementById('availableAthletes');
+            const selected = document.getElementById('selectedAthletes');
+            const selectedOptions = [...selected.selectedOptions];
+
+            selectedOptions.forEach(option => {
+                available.add(option);
+            });
+        }
+
+        function moveAll() {
+            const available = document.getElementById('availableAthletes');
+            const selected = document.getElementById('selectedAthletes');
+            // Check if available list has options and move them to selected list
+            if (available.options.length > 0) {
+                while (available.options.length > 0) {
+                    selected.add(available.options[0]);
+                }
+            }
+            // Otherwise, move all from selected list to available list
+            else if (selected.options.length > 0) {
+                while (selected.options.length > 0) {
+                    available.add(selected.options[0]);
+                }
+            }
+        }
+    </script>
+{% endblock %}
+>>>>>>> main
