@@ -1,16 +1,11 @@
-from flask import Blueprint, redirect, render_template, render_template_string, request, send_file
+from flask import Blueprint, redirect, render_template, render_template_string, request
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
-from datetime import datetime
 from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
 from bokeh.models import ColumnDataSource, HoverTool
-from bokeh.io.export import export_png
 from bokeh.embed import components
-
-import os
-import chromedriver_binary
 
 graphs_bp = Blueprint('graphs', __name__)
 # Database connection
@@ -71,22 +66,12 @@ def get_available_athletes(race_id):
 predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 athlete_to_color = {}
-# predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
-#                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
-# athlete_to_color = {}
 
 # Function to generate unique colors for each athlete
 def get_unique_color(runner_id):
     if runner_id not in athlete_to_color:
         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
     return athlete_to_color[runner_id]
-
-
-# # Function to generate unique colors for each athlete
-# def get_unique_color(runner_id):
-#     if runner_id not in athlete_to_color:
-#         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
-#     return athlete_to_color[runner_id]
 
 def generate_graph(race_id: int, athletes):
     # Limit to 10 athletes
@@ -200,16 +185,6 @@ def generate_graph(race_id: int, athletes):
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
-    # graph_dir = 'static/graphs'
-
-    # if not os.path.exists(graph_dir):
-    #     os.makedirs(graph_dir)
-
-    # # file path
-    # graph_path = os.path.join(graph_dir, f"graph_{race_id}.png")
-    # export_png(p, filename=graph_path)
-
-    # return graph_path
     script, div = components(p)
     return script, div
 
@@ -226,7 +201,7 @@ def generate_graph_route(race_id):
     selected_athletes = request.form.getlist('selected_athletes')
     script, div = generate_graph(int(race_id), selected_athletes)
     return f'{div}{script}'
-    
+
 @graphs_bp.route('/', methods=['GET', 'POST'])
 def select_race():
     # Fetch available races
