@@ -103,7 +103,13 @@ def generate_graph(race_id: int, athletes):
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
     # Initialize figure for plot
-    p = figure(title=f'Loss of Contact vs Judge Calls for Race {race_id}', x_axis_type="datetime", width=1920, height=940)
+    p = figure(
+        title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
+        x_axis_type="datetime", 
+        width=1920, 
+        height=940,
+        sizing_mode="scale_width"
+    )
     
     index = 0
     # Add each athlete's data to the combined plot
