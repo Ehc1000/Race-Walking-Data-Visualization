@@ -1,6 +1,5 @@
 Flask
 pandas
 bokeh
-chromedriver_binary
 selenium
 pdfkit
