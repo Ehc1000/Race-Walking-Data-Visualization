@@ -18,15 +18,18 @@ def data():
 @data_bp.route("/load_table/<table>")
 def load_table(table):
     db_file = request.args.get("db", "RWComplete.db")
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+    offset = (page - 1) * per_page
     with sql.connect(db_file) as conn:
         cursor = conn.cursor()
-        cursor.execute(f"SELECT * FROM {table};")
+        cursor.execute(f"SELECT * FROM {table} LIMIT ? OFFSET ?;", (per_page, offset))
         rows = cursor.fetchall()
         cursor.execute(f"PRAGMA table_info({table});")
         columns = [col[1] for col in cursor.fetchall()]
 
     return render_template(
-        "table_partial.html", table=table, content={"columns": columns, "rows": rows}
+        "table_partial.html", table=table, content={"columns": columns, "rows": rows}, page=page
     )
 
 
