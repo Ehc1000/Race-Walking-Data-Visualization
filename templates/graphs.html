@@ -89,6 +89,7 @@
             selectedOptions.forEach(option => {
                 selected.add(option);
             });
+            updateButtonState();
         }
 
         function moveToAvailable() {
@@ -99,6 +100,7 @@
             selectedOptions.forEach(option => {
                 available.add(option);
             });
+            updateButtonState();
         }
 
         function moveAll() {
@@ -116,6 +118,19 @@
                     available.add(selected.options[0]);
                 }
             }
+            updateButtonState();
         }
+        function updateButtonState() {
+            const moveToSelectedBtn = document.querySelector('button[onclick="moveToSelected()"]');
+            const moveToAvailableBtn = document.querySelector('button[onclick="moveToAvailable()"]');
+            const available = document.getElementById('availableAthletes');
+            const selected = document.getElementById('selectedAthletes');
+
+            moveToSelectedBtn.disabled = !available.selectedOptions.length;
+            moveToAvailableBtn.disabled = !selected.selectedOptions.length;
+        }
+        // Call updateButtonState when selection changes
+        document.getElementById('availableAthletes').addEventListener('change', updateButtonState);
+        document.getElementById('selectedAthletes').addEventListener('change', updateButtonState);
     </script>
 {% endblock %}
