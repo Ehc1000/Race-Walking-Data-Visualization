@@ -14,7 +14,6 @@ app.register_blueprint(data_bp, url_prefix='/data')
 app.register_blueprint(tables_bp, url_prefix='/tables')
 app.register_blueprint(graphs_bp, url_prefix='/graphs')
 app.register_blueprint(webscraper_bp, url_prefix='/webscraper')
-
 # This is how flask works. You have an annotation specifying the endpoint
 # a function corresponds to, and then inside it can forget you're in flask land completely if you want,
 # and then whatever you return, whether it be just a string or some raw html or a reference to a html file

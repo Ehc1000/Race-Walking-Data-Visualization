@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block title %}Race Graph{% endblock %}
 {% block head_bottom %}
@@ -46,38 +47,39 @@
         <a href="{{ url_for('graphs.graphs', race_id=3) }}">Race 3</a>
     </div>
 
-    <form action="{{ url_for('graphs.generate_graph_route', race_id=race_id) }}" method="GET" target="_blank"
-          onsubmit="openGraphInNewTab(event)">
-        <div class="dual-list-box">
-            <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
-                {% for athlete_id in athlete_ids %}
-                    <option value="{{ athlete_id }}">{{ athlete_id | int }}</option>
-                {% endfor %}
-            </select>
+    <form hx-post="{{ url_for('graphs.generate_graph_route', race_id=race_id) }}"
+      hx-target="#graph-container"
+      hx-swap="innerHTML">
+    <div class="dual-list-box">
+        <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
+            {% for athlete_id in athlete_ids %}
+                <option value="{{ athlete_id }}">{{ athlete_id | int }}</option>
+            {% endfor %}
+        </select>
 
-            <div class="buttons">
-                <button type="button" onclick="moveToSelected()">→</button>
-                <button type="button" onclick="moveToAvailable()">←</button>
-                <button type="button" onclick="moveAll()">Move All</button>
-            </div>
-
-            <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
-            </select>
+        <div class="buttons">
+            <button type="button" onclick="moveToSelected()">→</button>
+            <button type="button" onclick="moveToAvailable()">←</button>
+            <button type="button" onclick="moveAll()">Move All</button>
         </div>
 
-        <button type="submit">Generate Graph</button>
-    </form>
+        <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
+        </select>
+    </div>
 
+    <button type="submit">Generate Graph</button>
+</form>
+
+    <div id="graph-container" style="width: 100%; height: auto; margin: 0 auto;">
+        {% if div %}
+            {{ div | safe }}
+        {% endif %} 
+    </div>
+    {% if script %}
+        {{ script | safe }}
+    {% endif %}
+    <script src="https://unpkg.com/htmx.org"></script>
     <script>
-        function openGraphInNewTab(event) {
-            event.preventDefault();
-
-            const form = event.target;
-            const actionUrl = form.action + '?' + new URLSearchParams(new FormData(form)).toString();
-
-            // Open the new tab with the generated graph
-            window.open(actionUrl, '_blank');
-        }
 
         function moveToSelected() {
             const available = document.getElementById('availableAthletes');
