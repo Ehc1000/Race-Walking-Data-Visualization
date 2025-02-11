@@ -3,8 +3,19 @@
     <table border="1" id="{{ table }}">
         <thead>
             <tr>
-                {% for column in content.columns %}
-                <th>{{ column }}</th>
+                {% for col in content.columns %}
+                <th>
+                    <a href="#" hx-get="{{ url_for('data.load_table', 
+                            table=table, 
+                            sort=col,
+                            order='desc' if content.sort_by == col and content.order == 'asc' else 'asc',
+                            page=1) }}" hx-swap="outerHTML" hx-target="closest div">
+                        {{ col }}
+                        {% if content.sort_by == col %}
+                        {{ '▼' if content.order == 'desc' else '▲' }}
+                        {% endif %}
+                    </a>
+                </th>
                 {% endfor %}
             </tr>
         </thead>
@@ -27,14 +38,19 @@
         </tbody>
     </table>
 
-    <div class="pagination-controls">
-        <button id="prev-page" hx-get="{{ url_for('data.load_table', table=table) }}?page={{ page - 1 }}&per_page=10"
-            hx-trigger="click" hx-target="#table-container-{{ table }}" hx-swap="outerHTML" {% if page == 1 %}disabled{% endif %}>
-            Previous
-        </button>
-        <button id="next-page" hx-get="{{ url_for('data.load_table', table=table) }}?page={{ page + 1 }}&per_page=10"
-            hx-trigger="click" hx-target="#table-container-{{ table }}" hx-swap="outerHTML">
-            Next
-        </button>
+    <div class="pagination">
+        {% if content.current_page > 1 %}
+        <a href="#"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Previous</a>
+        {% endif %}
+
+        <span>Page {{ content.current_page }} of {{ content.total_pages }}</span>
+
+        {% if content.current_page < content.total_pages %}
+        <a href="#"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Next</a>
+        {% endif %}
     </div>
 </div>

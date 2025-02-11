@@ -118,6 +118,72 @@ tr:hover {
     background: #fafbfc;
 }
 
+th a {
+    color: #4a5568;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+
+th a:hover {
+    color: #2d3748;
+}
+
+/* Pagination controls */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-top: 1px solid #edf2f7;
+    background: #f8fafc;
+    border-radius: 0 0 8px 8px;
+}
+
+.pagination a {
+    color: #4a5568;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    background: #edf2f7;
+    transition: background 0.2s, color 0.2s;
+    font-size: 0.9rem;
+}
+
+.pagination a:hover {
+    background: #e2e8f0;
+    color: #2d3748;
+}
+
+.pagination span {
+    color: #718096;
+    font-size: 0.9rem;
+}
+
+th a::after {
+    content: '▲';
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.8rem;
+}
+
+th a:hover::after {
+    opacity: 0.5;
+}
+
+th a[data-sort="asc"]::after {
+    content: '▲';
+    opacity: 1;
+}
+
+th a[data-sort="desc"]::after {
+    content: '▼';
+    opacity: 1;
+}
+
 .table-placeholder {
     height: 300px;
     display: flex;
