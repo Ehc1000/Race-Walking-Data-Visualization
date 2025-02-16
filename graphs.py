@@ -49,10 +49,17 @@ def read_judge_calls_data(race_id, athlete_ids):
     return data
 
 def get_available_athletes(race_id):
+    # query = f'''
+    #     SELECT DISTINCT BibNumber 
+    #     FROM VideoObservation 
+    #     WHERE IDRace={race_id}
+    # '''
     query = f'''
-        SELECT DISTINCT BibNumber 
+        SELECT DISTINCT Bib.BibNumber, Athlete.FirstName, Athlete.LastName
         FROM VideoObservation 
-        WHERE IDRace={race_id}
+        JOIN Bib ON VideoObservation.BibNumber = Bib.BibNumber
+        JOIN Athlete ON Bib.IDAthlete = Athlete.Id
+        WHERE VideoObservation.IDRace={race_id}
     '''
     # Fetch data from the database
     data = pd.read_sql(query, conn)
@@ -61,7 +68,8 @@ def get_available_athletes(race_id):
     print(f"Query Result for Race {race_id}:")
 
     # Return a list of BibNumbers
-    return data['BibNumber'].tolist()
+    # return data['BibNumber'].tolist()
+    return data.to_dict(orient="records") 
 
 predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
@@ -195,12 +203,15 @@ def generate_graph(race_id: int, athletes):
     return script, div
 
 
+# @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
+# def graphs(race_id):
+#     # If GET request, show the selection form
+#     athletes = sorted(get_available_athletes(race_id))
+#     return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
 def graphs(race_id):
-    # If GET request, show the selection form
-    athletes = sorted(get_available_athletes(race_id))
+    athletes = sorted(get_available_athletes(race_id), key=lambda x: x["BibNumber"])
     return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
-
 
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['POST'])
 def generate_graph_route(race_id):

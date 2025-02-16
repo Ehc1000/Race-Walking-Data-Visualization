@@ -51,9 +51,16 @@
       hx-target="#graph-container"
       hx-swap="innerHTML">
     <div class="dual-list-box">
-        <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
+        <!-- <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
             {% for athlete_id in athlete_ids %}
                 <option value="{{ athlete_id }}">{{ athlete_id | int }}</option>
+            {% endfor %}
+        </select> -->
+        <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
+            {% for athlete in athlete_ids %}
+                <option value="{{ athlete['BibNumber'] }}">
+                    {{ athlete['FirstName'] }} {{ athlete['LastName'] }} ({{ athlete['BibNumber'] }})
+                </option>
             {% endfor %}
         </select>
 
