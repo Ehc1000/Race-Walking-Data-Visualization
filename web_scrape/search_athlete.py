@@ -1,10 +1,12 @@
 import platform
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager 
 import utils as u
 import constants as c
 
@@ -12,20 +14,36 @@ import constants as c
 def set_up():
     """
     Sets up a headless Chrome WebDriver for web scraping.
+
+    Uses webdriver-manager to automatically download the correct ChromeDriver version.
+    Configures the Chrome WebDriver with headless mode and initializes it for scraping.
+
     Returns:
-        WebDriver: Configured WebDriver instance.
+        WebDriver: An instance of the configured Chrome WebDriver.
+
+    Raises:
+        Exception: If there's an issue with setting up the WebDriver.
     """
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless=new")  # Use newer headless mode
+    chrome_options.add_argument("--no-sandbox")  # Helps avoid crashes
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Avoids memory issues
+    chrome_options.add_argument("--remote-debugging-port=9222")  # Helps debug
 
-    os_name = platform.system()
-    if os_name not in c.DRIVER_PATHS:
-        u.log("Unsupported OS. Only Windows and macOS are supported.", "error")
-        raise EnvironmentError("Unsupported OS. Only Windows and macOS are supported.")
+    try:
+        # Automatically install and use the correct ChromeDriver version
+        driver_path = ChromeDriverManager().install()
+        webdriver_service = Service(driver_path)
+        
+        url = "https://worldathletics.org/athletes/spain/alvaro-martin-14410246"  # TODO: Hardcoded URL for now
+        driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+        driver.maximize_window()
+        driver.get(url)
 
-    webdriver_service = Service(c.DRIVER_PATHS[os_name])
-    driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
-    return driver
+        return driver
+    except Exception as e:
+        u.log(f"Error setting up WebDriver: {e}", "error")
+        raise
 
 def extract_athlete_url(driver):
     """

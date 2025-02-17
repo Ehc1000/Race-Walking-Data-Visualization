@@ -3,3 +3,4 @@ pandas
 bokeh
 selenium
 pdfkit
+webdriver-manager
