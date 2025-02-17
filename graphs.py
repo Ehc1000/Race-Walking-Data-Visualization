@@ -58,7 +58,7 @@ def get_available_athletes(race_id):
         SELECT DISTINCT Bib.BibNumber, Athlete.FirstName, Athlete.LastName
         FROM VideoObservation 
         JOIN Bib ON VideoObservation.BibNumber = Bib.BibNumber
-        JOIN Athlete ON Bib.IDAthlete = Athlete.Id
+        JOIN Athlete ON Bib.IDAthlete = Athlete.IDAthlete
         WHERE VideoObservation.IDRace={race_id}
     '''
     # Fetch data from the database
