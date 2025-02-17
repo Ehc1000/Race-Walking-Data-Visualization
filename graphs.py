@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
 from bokeh.embed import components
 
 graphs_bp = Blueprint('graphs', __name__)
@@ -39,11 +39,18 @@ def read_id_data():
 
 def read_judge_calls_data(race_id, athlete_ids):
     athlete_ids_str = ",".join(map(str, athlete_ids))
+    # query = f'''
+    #     SELECT * FROM JudgeCall 
+    #     WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
+    #     ORDER BY Color 
+    #     LIMIT 329
+    # '''
     query = f'''
-        SELECT * FROM JudgeCall 
+        SELECT JudgeCall.*, Judge.FirstName, Judge.LastName
+        FROM JudgeCall
+        JOIN Judge ON JudgeCall.IDJudge = Judge.IDJudge
         WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
-        ORDER BY Color 
-        LIMIT 329
+        ORDER BY Color
     '''
     data = pd.read_sql(query, conn)
     return data
@@ -115,6 +122,8 @@ def generate_graph(race_id: int, athletes):
     )
     
     index = 0
+    # judge_legend_items = []
+    judge_legend_dict = {}
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
         runner_id = int(float(runner_id))
@@ -184,14 +193,25 @@ def generate_graph(race_id: int, athletes):
                 judge_calls_source.data['color'].append(color)
                 judge_calls_source.data['shape'].append(shape)
                 judge_calls_source.data['infraction'].append(row['Infraction'])
+
+                if row["IDJudge"] not in judge_legend_dict:
+                    judge_legend_dict[row["IDJudge"]] = f'Judge #{row["IDJudge"]}: {row["FirstName"]} {row["LastName"]}'
+
             p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
             p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
             p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
+            judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+            # judge_legend_items.append(LegendItem(label=f'Judge #{row["IDJudge"]}', renderers=[scatter_renderer]))
+            # judge_legend_items.append(LegendItem(label=f'{row["FirstName"]} {row["LastName"]}', renderers=[scatter_renderer]))
     p.legend.location = "top_left"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
+
+    judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+    judge_legend = Legend(items=judge_legend_items, location=(10, 0))
+    p.add_layout(judge_legend, 'right')
 
     script, div = components(p)
     return script, div
