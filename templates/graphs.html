@@ -93,9 +93,20 @@
             const selected = document.getElementById('selectedAthletes');
             const selectedOptions = [...available.selectedOptions];
 
-            selectedOptions.forEach(option => {
+            // Get how many spaces are left in the selected list (max 10)
+            let spaceLeft = 10 - selected.options.length;
+
+            if (spaceLeft <= 0) {
+                return; // Do nothing if already at max capacity
+            }
+
+            // Move only up to the allowed limit
+            selectedOptions.slice(0, spaceLeft).forEach(option => {
                 selected.add(option);
             });
+            // selectedOptions.forEach(option => {
+            //     selected.add(option);
+            // });
             updateButtonState();
         }
 
@@ -113,18 +124,23 @@
         function moveAll() {
             const available = document.getElementById('availableAthletes');
             const selected = document.getElementById('selectedAthletes');
-            // Check if available list has options and move them to selected list
-            if (available.options.length > 0) {
-                while (available.options.length > 0) {
-                    selected.add(available.options[0]);
-                }
-            }
-            // Otherwise, move all from selected list to available list
-            else if (selected.options.length > 0) {
-                while (selected.options.length > 0) {
-                    available.add(selected.options[0]);
-                }
-            }
+            let spaceLeft = 10 - selected.options.length;
+            let availableOptions = [...available.options].slice(0, spaceLeft); // Limit to 10
+            // // Check if available list has options and move them to selected list
+            // if (available.options.length > 0) {
+            //     while (available.options.length > 0) {
+            //         selected.add(available.options[0]);
+            //     }
+            // }
+            // // Otherwise, move all from selected list to available list
+            // else if (selected.options.length > 0) {
+            //     while (selected.options.length > 0) {
+            //         available.add(selected.options[0]);
+            //     }
+            // }
+            availableOptions.forEach(option => {
+                selected.add(option);
+            });
             updateButtonState();
         }
         function updateButtonState() {
@@ -133,8 +149,8 @@
             const available = document.getElementById('availableAthletes');
             const selected = document.getElementById('selectedAthletes');
 
-            moveToSelectedBtn.disabled = !available.selectedOptions.length;
-            moveToAvailableBtn.disabled = !selected.selectedOptions.length;
+            moveToSelectedBtn.disabled = available.selectedOptions.length === 0 || selected.options.length >= 10;
+            moveToAvailableBtn.disabled = selected.selectedOptions.length === 0;
         }
         // Call updateButtonState when selection changes
         document.getElementById('availableAthletes').addEventListener('change', updateButtonState);
