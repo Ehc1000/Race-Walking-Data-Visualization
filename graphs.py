@@ -122,7 +122,7 @@ def generate_graph(race_id: int, athletes):
     )
     
     index = 0
-    # judge_legend_items = []
+    # Define a judge dictionary to store names
     judge_legend_dict = {}
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
@@ -194,6 +194,7 @@ def generate_graph(race_id: int, athletes):
                 judge_calls_source.data['shape'].append(shape)
                 judge_calls_source.data['infraction'].append(row['Infraction'])
 
+                #Add Judge First and Last Name
                 if row["IDJudge"] not in judge_legend_dict:
                     judge_legend_dict[row["IDJudge"]] = f'Judge #{row["IDJudge"]}: {row["FirstName"]} {row["LastName"]}'
 
@@ -201,14 +202,14 @@ def generate_graph(race_id: int, athletes):
             p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
             p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
             judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
-            # judge_legend_items.append(LegendItem(label=f'Judge #{row["IDJudge"]}', renderers=[scatter_renderer]))
-            # judge_legend_items.append(LegendItem(label=f'{row["FirstName"]} {row["LastName"]}', renderers=[scatter_renderer]))
-    p.legend.location = "top_left"
+            
+    p.legend.location = "top_right"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
+    #Add Judge Legend
     judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
     judge_legend = Legend(items=judge_legend_items, location=(10, 0))
     p.add_layout(judge_legend, 'right')
