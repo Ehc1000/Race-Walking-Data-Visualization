@@ -49,11 +49,6 @@ def read_judge_calls_data(race_id, athlete_ids):
     return data
 
 def get_available_athletes(race_id):
-    # query = f'''
-    #     SELECT DISTINCT BibNumber 
-    #     FROM VideoObservation 
-    #     WHERE IDRace={race_id}
-    # '''
     query = f'''
         SELECT DISTINCT Bib.BibNumber, Athlete.FirstName, Athlete.LastName
         FROM VideoObservation 
@@ -130,7 +125,6 @@ def generate_graph(race_id: int, athletes):
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
         athlete_color = get_unique_color(runner_id)
-        # athlete_color = get_unique_color(runner_id)
         # Assign the color based on the athlete's index
         athlete_color = predefined_colors[index]
         index += 1
@@ -202,12 +196,6 @@ def generate_graph(race_id: int, athletes):
     script, div = components(p)
     return script, div
 
-
-# @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
-# def graphs(race_id):
-#     # If GET request, show the selection form
-#     athletes = sorted(get_available_athletes(race_id))
-#     return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
 def graphs(race_id):
     athletes = sorted(get_available_athletes(race_id), key=lambda x: x["BibNumber"])
