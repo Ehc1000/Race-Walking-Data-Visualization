@@ -112,13 +112,21 @@ def generate_graph(race_id: int, athletes):
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
+    min_time = loc_data['Time'].min()
+    max_time = loc_data['Time'].max()
+    time_range = max_time - min_time
+    buffer_seconds = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis and prevent judge # from cutting off at the right
+    buffer = pd.Timedelta(seconds=buffer_seconds)
+    extended_max_time = max_time + buffer
+
     # Initialize figure for plot
     p = figure(
         title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
         x_axis_type="datetime", 
         width=1920, 
         height=940,
-        sizing_mode="scale_width"
+        sizing_mode="scale_width",
+        x_range=(min_time, extended_max_time)
     )
     
     index = 0
