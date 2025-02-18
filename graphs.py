@@ -117,6 +117,7 @@ def generate_graph(race_id: int, athletes):
     time_range = max_time - min_time
     buffer_seconds = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis and prevent judge # from cutting off at the right
     buffer = pd.Timedelta(seconds=buffer_seconds)
+    extended_min_time = min_time - buffer
     extended_max_time = max_time + buffer
 
     # Initialize figure for plot
@@ -126,7 +127,7 @@ def generate_graph(race_id: int, athletes):
         width=1920, 
         height=940,
         sizing_mode="scale_width",
-        x_range=(min_time, extended_max_time)
+        x_range=(extended_min_time, extended_max_time)
     )
     
     index = 0
