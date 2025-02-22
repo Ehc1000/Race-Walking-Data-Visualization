@@ -158,7 +158,7 @@ def generate_graph(race_id: int, athletes):
         })
 
         p.line(x='x', y='y', source=source, line_width=3, color=athlete_color, alpha=1, muted_alpha=0.1,
-               legend_label=f"{name} {surname}")
+               legend_label=f"{name} {surname} ({runner_id})")
         p.scatter(x='x', y='y', source=source, color=athlete_color, size=5)
 
         hover = HoverTool(tooltips=[
