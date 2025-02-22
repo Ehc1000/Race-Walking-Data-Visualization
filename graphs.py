@@ -221,7 +221,8 @@ def generate_graph(race_id: int, athletes):
     p.yaxis.axis_label = "LOC"
 
     #Add Judge Legend
-    judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+    sorted_judge_items = sorted(judge_legend_dict.items())
+    judge_legend_items = [LegendItem(label=label) for _, label in sorted_judge_items]
     judge_legend = Legend(items=judge_legend_items, location=(10, 0))
     p.add_layout(judge_legend, 'right')
 
