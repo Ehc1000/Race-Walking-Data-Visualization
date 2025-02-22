@@ -225,6 +225,8 @@ def generate_graph(race_id: int, athletes):
     judge_legend = Legend(items=judge_legend_items, location=(10, 0))
     p.add_layout(judge_legend, 'right')
 
+    p.legend.location = "top_right"
+
     script, div = components(p)
     return script, div
 
