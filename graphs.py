@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
 from bokeh.embed import components
 
 graphs_bp = Blueprint('graphs', __name__)
@@ -39,20 +39,29 @@ def read_id_data():
 
 def read_judge_calls_data(race_id, athlete_ids):
     athlete_ids_str = ",".join(map(str, athlete_ids))
+    # query = f'''
+    #     SELECT * FROM JudgeCall 
+    #     WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
+    #     ORDER BY Color 
+    #     LIMIT 329
+    # '''
     query = f'''
-        SELECT * FROM JudgeCall 
+        SELECT JudgeCall.*, Judge.FirstName, Judge.LastName
+        FROM JudgeCall
+        JOIN Judge ON JudgeCall.IDJudge = Judge.IDJudge
         WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
-        ORDER BY Color 
-        LIMIT 329
+        ORDER BY Color
     '''
     data = pd.read_sql(query, conn)
     return data
 
 def get_available_athletes(race_id):
     query = f'''
-        SELECT DISTINCT BibNumber 
+        SELECT DISTINCT Bib.BibNumber, Athlete.FirstName, Athlete.LastName
         FROM VideoObservation 
-        WHERE IDRace={race_id}
+        JOIN Bib ON VideoObservation.BibNumber = Bib.BibNumber
+        JOIN Athlete ON Bib.IDAthlete = Athlete.IDAthlete
+        WHERE VideoObservation.IDRace={race_id}
     '''
     # Fetch data from the database
     data = pd.read_sql(query, conn)
@@ -61,7 +70,8 @@ def get_available_athletes(race_id):
     print(f"Query Result for Race {race_id}:")
 
     # Return a list of BibNumbers
-    return data['BibNumber'].tolist()
+    # return data['BibNumber'].tolist()
+    return data.to_dict(orient="records") 
 
 predefined_colors = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
                      "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
@@ -102,16 +112,27 @@ def generate_graph(race_id: int, athletes):
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
 
+    min_time = loc_data['Time'].min()
+    max_time = loc_data['Time'].max()
+    time_range = max_time - min_time
+    buffer_seconds = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis and prevent judge # from cutting off at the right
+    buffer = pd.Timedelta(seconds=buffer_seconds)
+    extended_min_time = min_time - buffer
+    extended_max_time = max_time + buffer
+
     # Initialize figure for plot
     p = figure(
         title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
         x_axis_type="datetime", 
         width=1920, 
         height=940,
-        sizing_mode="scale_width"
+        sizing_mode="scale_width",
+        x_range=(extended_min_time, extended_max_time)
     )
     
     index = 0
+    # Define a judge dictionary to store names
+    judge_legend_dict = {}
     # Add each athlete's data to the combined plot
     for runner_id in athletes:
         runner_id = int(float(runner_id))
@@ -122,7 +143,6 @@ def generate_graph(race_id: int, athletes):
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
         athlete_color = get_unique_color(runner_id)
-        # athlete_color = get_unique_color(runner_id)
         # Assign the color based on the athlete's index
         athlete_color = predefined_colors[index]
         index += 1
@@ -182,25 +202,34 @@ def generate_graph(race_id: int, athletes):
                 judge_calls_source.data['color'].append(color)
                 judge_calls_source.data['shape'].append(shape)
                 judge_calls_source.data['infraction'].append(row['Infraction'])
+
+                #Add Judge First and Last Name
+                if row["IDJudge"] not in judge_legend_dict:
+                    judge_legend_dict[row["IDJudge"]] = f'Judge #{row["IDJudge"]}: {row["FirstName"]} {row["LastName"]}'
+
             p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
             p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
             p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
-    p.legend.location = "top_left"
+            judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+            
+    p.legend.location = "top_right"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
     p.yaxis.axis_label = "LOC"
 
+    #Add Judge Legend
+    judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+    judge_legend = Legend(items=judge_legend_items, location=(10, 0))
+    p.add_layout(judge_legend, 'right')
+
     script, div = components(p)
     return script, div
 
-
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
 def graphs(race_id):
-    # If GET request, show the selection form
-    athletes = sorted(get_available_athletes(race_id))
+    athletes = sorted(get_available_athletes(race_id), key=lambda x: x["BibNumber"])
     return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
-
 
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['POST'])
 def generate_graph_route(race_id):
