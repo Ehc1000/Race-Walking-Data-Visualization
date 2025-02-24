@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 from bokeh.palettes import Blues8, Category10, Viridis256
 from bokeh.plotting import figure
-from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem
+from bokeh.models import ColumnDataSource, HoverTool, Legend, LegendItem, DatetimeTickFormatter
 from bokeh.embed import components
 
 graphs_bp = Blueprint('graphs', __name__)
@@ -82,6 +82,20 @@ def get_unique_color(runner_id):
     if runner_id not in athlete_to_color:
         athlete_to_color[runner_id] = predefined_colors[len(athlete_to_color) % len(predefined_colors)]
     return athlete_to_color[runner_id]
+    
+def clean_time_string(time_str):
+    # Replace invalid characters (e.g., double quotes) with valid ones
+    return time_str.replace('"', ':')
+
+def convert_time(time_str):
+    try:
+        # Clean the time string first
+        cleaned_time_str = clean_time_string(time_str)
+        # Attempt to convert the cleaned time string to a datetime object
+        return pd.to_datetime(cleaned_time_str)
+    except ValueError:
+        # If conversion fails, append 'AM' and try again
+        return pd.to_datetime(cleaned_time_str + ' AM')
 
 def generate_graph(race_id: int, athletes):
     # Limit to 10 athletes
@@ -107,7 +121,7 @@ def generate_graph(race_id: int, athletes):
     name_data = read_id_data()
 
     loc_data['Time'] = pd.to_datetime(loc_data['Time'])
-    judge_calls_data['TOD'] = pd.to_datetime(judge_calls_data['TOD'])
+    judge_calls_data['TOD'] = judge_calls_data['TOD'].apply(convert_time)
 
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
@@ -131,17 +145,22 @@ def generate_graph(race_id: int, athletes):
         sizing_mode="scale_width",
         x_range=(extended_min_time, extended_max_time)
     )
-    
+
+    # Set the x-axis tick formatter to display military time (HH:MM)
+    p.xaxis.formatter = DatetimeTickFormatter(hours="%H:%M", minutes="%H:%M")
+
     index = 0
     # Define a judge dictionary to store names
     judge_legend_dict = {}
     # Add each athlete's data to the combined plot
+    athletes_with_no_data = []
     for runner_id in athletes:
         runner_id = int(float(runner_id))
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
 
         if loc_data_runner.empty:
+            athletes_with_no_data.append(f"{runner_id}")
             print(f"No data found for runner ID {runner_id}. Skipping.")
             continue
         athlete_color = get_unique_color(runner_id)
@@ -168,7 +187,7 @@ def generate_graph(race_id: int, athletes):
             ("LastName", "@surname"),
             ("Bib Number", "@bib_number"),
             ("LOC", "@y"),
-            ("Time", "@x{%F %T}")
+            ("Time", "@x{%H:%M:%S}")
         ], formatters={'@x': 'datetime'}, mode='mouse')
 
         p.add_tools(hover)
@@ -229,23 +248,55 @@ def generate_graph(race_id: int, athletes):
     p.legend.location = "top_right"
 
     script, div = components(p)
-    return script, div
+    return script, div, athletes_with_no_data
 
 @graphs_bp.route('/race/<int:race_id>', methods=['GET'])
 def graphs(race_id):
+    # Fetch available races
+    query = 'SELECT DISTINCT IDRace FROM Race'
+    race_data = pd.read_sql(query, conn)
+    print(race_data)
+    race_ids = race_data['IDRace'].tolist()  # List of available race IDs
+    print(race_ids)
+    # Fetch athletes for the selected race
     athletes = sorted(get_available_athletes(race_id), key=lambda x: x["BibNumber"])
-    return render_template('graphs.html', race_id=race_id, athlete_ids=athletes, script=None, div=None)
+
+    # Render the template with race_ids, race_id, and athlete_ids
+    return render_template('graphs.html', race_ids=race_ids, race_id=race_id, athlete_ids=athletes)
 
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['POST'])
 def generate_graph_route(race_id):
     selected_athletes = request.form.getlist('selected_athletes')
-    script, div = generate_graph(int(race_id), selected_athletes)
-    return f'{div}{script}'
+    script, div, athletes_with_no_data = generate_graph(int(race_id), selected_athletes)
+    
+    # warning message generation
+    warning_message = ""
+    if athletes_with_no_data:
+        warning_message = "No data found for the following athletes: " + ", ".join(athletes_with_no_data)
+    
+    # Return the warning box, graph, and script
+    return f'''
+        <div id="warning-box" class="warning-box" style="display: {'inline-block' if warning_message else 'none'};">
+            <p id="warning-message">{warning_message}</p>
+        </div>
+        {div}
+        {script}
+        <script>
+            // Display the warning box if there's a warning message
+            const warningBox = document.getElementById('warning-box');
+            const warningMessage = document.getElementById('warning-message');
+            if (warningMessage.textContent) {{
+                warningBox.style.display = 'inline-block';
+            }} else {{
+                warningBox.style.display = 'none';
+            }}
+        </script>
+    '''
 
 @graphs_bp.route('/', methods=['GET', 'POST'])
 def select_race():
     # Fetch available races
-    query = 'SELECT DISTINCT IDRace FROM VideoObservation'
+    query = 'SELECT DISTINCT IDRace FROM Race'
     race_data = pd.read_sql(query, conn)
     race_ids = race_data['IDRace'].tolist()  # List of available race IDs
     
@@ -253,8 +304,9 @@ def select_race():
     if request.method == 'POST':
         race_id = request.form.get('race_id')
         return redirect(f'/graphs/race/{race_id}')
-    
-    return render_template('graphs.html', race_ids=race_ids)
+
+    # Render the template with the list of race IDs
+    return render_template('graphs.html', race_ids=race_ids, race_id=None)
 
 @graphs_bp.route('/get-available-athletes/', methods=['GET', 'POST'])
 def get_athletes():
