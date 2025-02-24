@@ -26,7 +26,7 @@ def read_loc_data(race_id, athlete_ids):
 
 
 def read_bib_data():
-    data = pd.read_sql('SELECT "IDAthlete", "BibNumber" FROM Bib LIMIT 96', conn)
+    data = pd.read_sql('SELECT "IDAthlete", "BibNumber" FROM Bib', conn)
     data.columns = ['ID', 'BibNumber']
     return data
 
@@ -67,7 +67,7 @@ def get_available_athletes(race_id):
     data = pd.read_sql(query, conn)
 
     # Debug output to check the content of the DataFrame
-    print(f"Query Result for Race {race_id}:")
+    print(f"Query Result for Race {race_id}: {data}")
 
     # Return a list of BibNumbers
     # return data['BibNumber'].tolist()
@@ -114,11 +114,13 @@ def generate_graph(race_id: int, athletes):
         "#17becf"  # Cyan
     ]
     # Fetch data for specified athlete IDs only
-    print(athletes)
+    #print(athletes)
     loc_data = read_loc_data(race_id, athletes)
     judge_calls_data = read_judge_calls_data(race_id, athletes)
     bib_data = read_bib_data()
     name_data = read_id_data()
+    # print(f"bib_data:\n{bib_data.to_string()}\n")
+    # print(f"name_data:\n{name_data.to_string()}\n")
 
     loc_data['Time'] = pd.to_datetime(loc_data['Time'])
     judge_calls_data['TOD'] = judge_calls_data['TOD'].apply(convert_time)
@@ -157,6 +159,8 @@ def generate_graph(race_id: int, athletes):
     for runner_id in athletes:
         runner_id = int(float(runner_id))
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
+        # print(f"LOC DATA: \n {loc_data_runner}")
+        # print(f"MERGED DATA: \n {merged_data}")
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
 
         if loc_data_runner.empty:
@@ -299,7 +303,7 @@ def select_race():
     query = 'SELECT DISTINCT IDRace FROM Race'
     race_data = pd.read_sql(query, conn)
     race_ids = race_data['IDRace'].tolist()  # List of available race IDs
-    
+
     # If form is submitted, redirect to the selected race ID
     if request.method == 'POST':
         race_id = request.form.get('race_id')
