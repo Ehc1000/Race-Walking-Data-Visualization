@@ -1,6 +1,6 @@
 Flask
 pandas
-bokeh
+bokeh==3.4.3
 selenium
 pdfkit
 webdriver-manager

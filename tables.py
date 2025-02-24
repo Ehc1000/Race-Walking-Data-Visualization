@@ -1,15 +1,39 @@
 import os
-
+import sys
+import platform
+import pdfkit
 from flask import Blueprint, render_template, request, send_file
-
 import common as cmn
 
-try:
-    # https://pypi.org/project/pdfkit/
-    import pdfkit
-except ImportError as ie:
-    print(ie.msg)
-    pdfkit = False
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
+ARCH = platform.machine().lower()
+
+BINARIES = {
+    "win32": os.path.join(REPO_DIR, "bin", "win", "wkhtmltopdf.exe"),
+    "darwin": os.path.join(REPO_DIR, "bin", "mac", "wkhtmltopdf"),
+    "linux": {
+        "x86_64": os.path.join(REPO_DIR, "bin", "lin", "x86_64", "wkhtmltopdf"),
+        "arm64": os.path.join(REPO_DIR, "bin", "lin", "arm64", "wkhtmltopdf"),
+    }
+}
+
+if sys.platform.startswith("win"):
+    WKHTMLTOPDF_PATH = BINARIES["win32"]
+elif sys.platform == "darwin":
+    WKHTMLTOPDF_PATH = BINARIES["darwin"]
+elif sys.platform.startswith("linux"):
+    WKHTMLTOPDF_PATH = BINARIES["linux"].get(ARCH)
+else:
+    raise RuntimeError("Unsupported OS!")
+
+if not WKHTMLTOPDF_PATH or not os.path.exists(WKHTMLTOPDF_PATH):
+    print(f"No local wkhtmltopdf binary found for {sys.platform} ({ARCH}). Falling back to system path.")
+    WKHTMLTOPDF_PATH = "wkhtmltopdf"
+
+if sys.platform != "win" and os.path.exists(WKHTMLTOPDF_PATH):
+    os.chmod(WKHTMLTOPDF_PATH, 0o755)
+
+CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 tables_bp = Blueprint("tables", __name__)
 
@@ -53,7 +77,7 @@ def download_pdf():
         "static/tables.css"
     ]
 
-    pdfkit.from_string(html_table, pdf_output_path, css=css_files)
+    pdfkit.from_string(html_table, pdf_output_path, css=css_files, configuration=CONFIG)
     return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
 
 
