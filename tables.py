@@ -17,23 +17,22 @@ BINARIES = {
     }
 }
 
+WKHTMLTOPDF_PATH = None
 if sys.platform.startswith("win"):
     WKHTMLTOPDF_PATH = BINARIES["win32"]
 elif sys.platform == "darwin":
     WKHTMLTOPDF_PATH = BINARIES["darwin"]
 elif sys.platform.startswith("linux"):
     WKHTMLTOPDF_PATH = BINARIES["linux"].get(ARCH)
-else:
-    raise RuntimeError("Unsupported OS!")
 
 if not WKHTMLTOPDF_PATH or not os.path.exists(WKHTMLTOPDF_PATH):
     print(f"No local wkhtmltopdf binary found for {sys.platform} ({ARCH}). Falling back to system path.")
-    WKHTMLTOPDF_PATH = "wkhtmltopdf"
+    CONFIG = pdfkit.configuration()
+else:
+    CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+    if sys.platform != "win" and os.path.exists(WKHTMLTOPDF_PATH):
+        os.chmod(WKHTMLTOPDF_PATH, 0o755)
 
-if sys.platform != "win" and os.path.exists(WKHTMLTOPDF_PATH):
-    os.chmod(WKHTMLTOPDF_PATH, 0o755)
-
-CONFIG = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 tables_bp = Blueprint("tables", __name__)
 
