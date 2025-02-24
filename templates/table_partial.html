@@ -24,10 +24,15 @@
             <tr>
                 {% for item in row %}
                 <td>
-                    <div class="editable" hx-target="closest td"
+                    <div class="editable" 
+                        hx-target="closest td"
                         hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
-                        contenteditable="true" hx-trigger="blur" hx-swap="outerHTML"
-                        hx-include="next input[name='value']" oninput="this.nextElementSibling.value = this.innerText">
+                        contenteditable="true" 
+                        hx-trigger="edit-confirm" 
+                        hx-swap="outerHTML"
+                        hx-include="next input[name='value']" 
+                        onfocus="storeOriginalValue(this)"
+                        onblur="confirmEdit(this)">
                         {{ item }}
                     </div>
                     <input type="hidden" name="value" value="{{ item }}" />
@@ -54,3 +59,28 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+
+    function storeOriginalValue(element) {
+        element.setAttribute('data-original-value', element.innerText);
+    }
+
+    function confirmEdit(element) {
+        let originalValue = element.getAttribute('data-original-value');
+        let newValue = element.innerText.trim();
+    
+        if (newValue !== originalValue) {
+            let isConfirmed = confirm("Do you want to save the changes?");
+            
+            if (isConfirmed) {
+                element.nextElementSibling.value = newValue; 
+                element.setAttribute("hx-trigger", "edit-confirm");
+                element.dispatchEvent(new Event("edit-confirm"));
+            } else {
+                element.innerText = originalValue;
+            }
+        }
+    }
+</script>
+    
