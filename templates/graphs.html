@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 {% block title %}Race Graph{% endblock %}
 {% block head_bottom %}
@@ -35,6 +34,33 @@
         .nav-links a:hover {
             text-decoration: underline;
         }
+
+        .submit {
+            margin-top: 10px; 
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
+
+        .selected-count {
+            margin-left: 480px;
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .warning-box {
+            margin-top: 50px;
+            padding: 10px;
+            background-color: #ffebee;
+            border: 1px solid #ffcdd2;
+            border-radius: 4px;
+            color: #c62828;
+            margin-bottom: 20px;
+            display: inline-block; /* Hidden by default */
+            max-width: 100%; /* Ensure it doesn't overflow the container */
+            white-space: nowrap; /* Prevent text from wrapping */
+
+        }
     </style>
 {% endblock %}
 
@@ -42,46 +68,55 @@
     <h1>Race {{ race_id }} Graph Generator</h1>
 
     <div class="nav-links">
-        <a href="{{ url_for('graphs.graphs', race_id=1) }}">Race 1</a>
-        <a href="{{ url_for('graphs.graphs', race_id=2) }}">Race 2</a>
-        <a href="{{ url_for('graphs.graphs', race_id=3) }}">Race 3</a>
+        {% for race_id in race_ids %}
+            <a href="{{ url_for('graphs.graphs', race_id=race_id) }}">Race {{ race_id }}</a>
+        {% endfor %}
     </div>
-
+    <div class="selected-count" id="selectedCount">Selected: 0/10</div>
     <form hx-post="{{ url_for('graphs.generate_graph_route', race_id=race_id) }}"
-      hx-target="#graph-container"
-      hx-swap="innerHTML">
-    <div class="dual-list-box">
-        <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
-            {% for athlete in athlete_ids %}
-                <option value="{{ athlete['BibNumber'] }}">
-                    {{ athlete['FirstName'] }} {{ athlete['LastName'] }} ({{ athlete['BibNumber'] }})
-                </option>
-            {% endfor %}
-        </select>
+          hx-target="#graph-container"
+          hx-swap="innerHTML">
+        <div class="dual-list-box">
+            <select id="availableAthletes" name="available_athletes" class="list-box" multiple>
+                {% for athlete in athlete_ids %}
+                    <option value="{{ athlete['BibNumber'] }}">
+                        {{ athlete['FirstName'] }} {{ athlete['LastName'] }} ({{ athlete['BibNumber'] }})
+                    </option>
+                {% endfor %}
+            </select>
 
-        <div class="buttons">
-            <button type="button" onclick="moveToSelected()">→</button>
-            <button type="button" onclick="moveToAvailable()">←</button>
-            <button type="button" onclick="moveAll()">Move All</button>
+            <div class="buttons">
+                <button type="button" onclick="moveToSelected()">→</button>
+                <button type="button" onclick="moveToAvailable()">←</button>
+            </div>
+
+            <div>
+                <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
+                </select>
+            </div>
         </div>
 
-        <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
-        </select>
-    </div>
-
-    <button type="submit">Generate Graph</button>
-</form>
+        <button type="submit" class="submit">Generate Graph</button>
+    </form>
 
     <div id="graph-container" style="width: 100%; height: auto; margin: 0 auto;">
+        <!-- Warning box will be included here by HTMX -->
         {% if div %}
             {{ div | safe }}
         {% endif %} 
     </div>
+
     {% if script %}
         {{ script | safe }}
     {% endif %}
     <script src="https://unpkg.com/htmx.org"></script>
     <script>
+        function updateSelectedCount() {
+            const selected = document.getElementById('selectedAthletes');
+            const selectedCount = selected.options.length;
+            const countText = `Selected: ${selectedCount}/10`;
+            document.getElementById('selectedCount').textContent = countText;
+        }
 
         function moveToSelected() {
             const available = document.getElementById('availableAthletes');
@@ -99,6 +134,7 @@
             selectedOptions.slice(0, spaceLeft).forEach(option => {
                 selected.add(option);
             });
+            updateSelectedCount();
             updateButtonState();
         }
 
@@ -110,20 +146,10 @@
             selectedOptions.forEach(option => {
                 available.add(option);
             });
+            updateSelectedCount();
             updateButtonState();
         }
 
-        function moveAll() {
-            const available = document.getElementById('availableAthletes');
-            const selected = document.getElementById('selectedAthletes');
-            let spaceLeft = 10 - selected.options.length;
-            let availableOptions = [...available.options].slice(0, spaceLeft); // Limit to 10
-            
-            availableOptions.forEach(option => {
-                selected.add(option);
-            });
-            updateButtonState();
-        }
         function updateButtonState() {
             const moveToSelectedBtn = document.querySelector('button[onclick="moveToSelected()"]');
             const moveToAvailableBtn = document.querySelector('button[onclick="moveToAvailable()"]');
@@ -133,8 +159,18 @@
             moveToSelectedBtn.disabled = available.selectedOptions.length === 0 || selected.options.length >= 10;
             moveToAvailableBtn.disabled = selected.selectedOptions.length === 0;
         }
-        // Call updateButtonState when selection changes
-        document.getElementById('availableAthletes').addEventListener('change', updateButtonState);
-        document.getElementById('selectedAthletes').addEventListener('change', updateButtonState);
+
+        // Call updateButtonState and updateSelectedCount when selection changes
+        document.getElementById('availableAthletes').addEventListener('change', () => {
+            updateButtonState();
+            updateSelectedCount();
+        });
+        document.getElementById('selectedAthletes').addEventListener('change', () => {
+            updateButtonState();
+            updateSelectedCount();
+        });
+
+        // Initialize the selected count on page load
+        updateSelectedCount();
     </script>
 {% endblock %}
