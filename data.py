@@ -27,6 +27,7 @@ def load_table(table):
     per_page = request.args.get("per_page", 10, type=int)
     sort_by = request.args.get("sort", "")
     order = request.args.get("order", "asc")
+    search_term = request.args.get("search_term", "")
 
     offset = (page - 1) * per_page
     order_clause = f"ORDER BY {sort_by} {order.upper()}" if sort_by else ""
@@ -34,17 +35,25 @@ def load_table(table):
     with sql.connect(db_file) as conn:
         cursor = conn.cursor()
 
-        cursor.execute(f"SELECT COUNT(*) FROM {table}")
+        cursor.execute(f"PRAGMA table_info({table});")
+        columns = [col[1] for col in cursor.fetchall()]
+
+        search_clause = ""
+        params = [per_page, offset]
+
+        if search_term:
+            search_clause = " WHERE " + " OR ".join(f"{col} LIKE ?" for col in columns)
+            params = [f"%{search_term}%"] * len(columns) + params
+
+        cursor.execute(f"SELECT COUNT(*) FROM {table} {search_clause}", params[:-2])
         total_rows = cursor.fetchone()[0]
 
         cursor.execute(
-            f"SELECT * FROM {table} {order_clause} LIMIT ? OFFSET ?;",
-            (per_page, offset),
+            f"SELECT * FROM {table} {search_clause} {order_clause} LIMIT ? OFFSET ?;",
+            params,
         )
         rows = cursor.fetchall()
 
-        cursor.execute(f"PRAGMA table_info({table});")
-        columns = [col[1] for col in cursor.fetchall()]
         total_pages = (total_rows + per_page - 1) // per_page
 
     return render_template(
