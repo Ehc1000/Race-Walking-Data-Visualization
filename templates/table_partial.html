@@ -1,5 +1,14 @@
 <div class="table-container" id="table-container-{{ table }}">
-    <h2>Table: {{ table }}</h2>
+    <h2 style="display: flex; justify-content: space-between; align-items: center;">
+        Table: {{ table }}
+        <input type="text" name="search_term" placeholder="Search" 
+            value="{{ request.args.get('search_term', '') }}" 
+            hx-get="{{ url_for('data.load_table', table=table) }}" 
+            hx-target="#table-container-{{ table }}" 
+            hx-swap="outerHTML" 
+            hx-trigger="keyup[key=='Enter']"
+            style="padding: 5px; font-size: 14px;" />
+    </h2>
     <table border="1" id="{{ table }}">
         <thead>
             <tr>
@@ -46,7 +55,7 @@
     <div class="pagination">
         {% if content.current_page > 1 %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
             hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Previous</a>
         {% endif %}
 
@@ -54,7 +63,7 @@
 
         {% if content.current_page < content.total_pages %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
             hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Next</a>
         {% endif %}
     </div>
