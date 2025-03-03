@@ -97,6 +97,22 @@ def convert_time(time_str):
         # If conversion fails, append 'AM' and try again
         return pd.to_datetime(cleaned_time_str + ' AM')
 
+
+def combine_infractions(infractions):
+    # Convert the list of infractions to a set to remove duplicates
+    unique_infractions = set(infractions)
+    
+    # If both '~' and '<' are present, return '~/<'
+    if '~' in unique_infractions and '<' in unique_infractions:
+        return 'B'
+    # Otherwise, return the first infraction in the set
+    elif unique_infractions:
+        return list(unique_infractions)[0]
+    # If no infractions, return an empty string
+    return ''
+
+
+
 def generate_graph(race_id: int, athletes):
     # Limit to 10 athletes
     athletes = athletes[:10]
@@ -199,8 +215,25 @@ def generate_graph(race_id: int, athletes):
         # Add judge call markers
         color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
         judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
-        print(judge_calls_data)
-        for _, row in judge_calls_data[judge_calls_data['BibNumber'] == runner_id].iterrows():
+
+        added_judges = set()
+        # Iterate over the original judge_calls_data to populate the legend
+        for _, row in judge_calls_data.iterrows():
+            judge_id = row['IDJudge']
+            if judge_id not in added_judges:
+                judge_legend_dict[judge_id] = f'Judge #{judge_id}: {row["FirstName"]} {row["LastName"]}'
+                added_judges.add(judge_id)
+
+        # Group by BibNumber and TOD, and aggregate the judge calls
+        grouped_judge_calls = judge_calls_data.groupby(['BibNumber', 'TOD']).agg({
+            'IDJudge': lambda x: ', '.join(map(str, x)),
+            'Color': 'first',  # Assuming all entries in the group have the same color
+            'Infraction': lambda x: combine_infractions(x),
+            'FirstName': lambda x: ', '.join(x),
+            'LastName': lambda x: ', '.join(x)
+        }).reset_index()
+
+        for _, row in grouped_judge_calls[grouped_judge_calls['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
             after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']].iloc[:1]
 
@@ -220,22 +253,22 @@ def generate_graph(race_id: int, athletes):
                 y_judge = loc3
                 color = color_mapping.get(row['Color'], 'red')
                 shape = 'square' if row['Color'] == 'Red' else 'circle'
-
+                
                 judge_calls_source.data['x'].append(x_judge)
                 judge_calls_source.data['y'].append(y_judge)
-                judge_calls_source.data['text'].append('  Judge #' + str(row['IDJudge']))
+                judge_calls_source.data['text'].append('    #' + str(row['IDJudge']))
                 judge_calls_source.data['color'].append(color)
                 judge_calls_source.data['shape'].append(shape)
                 judge_calls_source.data['infraction'].append(row['Infraction'])
 
-                #Add Judge First and Last Name
-                if row["IDJudge"] not in judge_legend_dict:
-                    judge_legend_dict[row["IDJudge"]] = f'Judge #{row["IDJudge"]}: {row["FirstName"]} {row["LastName"]}'
+        # Plot the scatter points and text
+        p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
+        p.text(x='x', y='y', text='text', color='black', source=judge_calls_source, y_offset=10)
+        p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
 
-            p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
-            p.text(x='x', y='y', text='text', color='black', source=judge_calls_source)
-            p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
-            judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+        # Create legend items
+        judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+
             
     p.legend.location = "top_right"
     p.legend.click_policy = "mute"
@@ -246,11 +279,9 @@ def generate_graph(race_id: int, athletes):
     #Add Judge Legend
     sorted_judge_items = sorted(judge_legend_dict.items())
     judge_legend_items = [LegendItem(label=label) for _, label in sorted_judge_items]
-    judge_legend = Legend(items=judge_legend_items, location=(10, 0))
-    p.add_layout(judge_legend, 'right')
-
-    p.legend.location = "top_right"
-
+    judge_legend = Legend(items=judge_legend_items)
+    judge_legend.location = "right"
+    p.add_layout(judge_legend)
     script, div = components(p)
     return script, div, athletes_with_no_data
 
