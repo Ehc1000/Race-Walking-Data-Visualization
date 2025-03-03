@@ -58,7 +58,7 @@ def read_judge_calls_data(race_id, athlete_ids):
 def get_available_athletes(race_id):
     query = f'''
         SELECT DISTINCT Bib.BibNumber, Athlete.FirstName, Athlete.LastName
-        FROM VideoObservation 
+        FROM VideoObservation
         JOIN Bib ON VideoObservation.BibNumber = Bib.BibNumber
         JOIN Athlete ON Bib.IDAthlete = Athlete.IDAthlete
         WHERE VideoObservation.IDRace={race_id}
@@ -67,7 +67,7 @@ def get_available_athletes(race_id):
     data = pd.read_sql(query, conn)
 
     # Debug output to check the content of the DataFrame
-    print(f"Query Result for Race {race_id}: {data}")
+    # print(f"Query Result for Race {race_id}: {data}")
 
     # Return a list of BibNumbers
     # return data['BibNumber'].tolist()
@@ -87,15 +87,18 @@ def clean_time_string(time_str):
     # Replace invalid characters (e.g., double quotes) with valid ones
     return time_str.replace('"', ':')
 
-def convert_time(time_str):
+def convert_time(time_str, race_date):
     try:
         # Clean the time string first
         cleaned_time_str = clean_time_string(time_str)
-        # Attempt to convert the cleaned time string to a datetime object
-        return pd.to_datetime(cleaned_time_str)
+        # Combine the race date with the cleaned time string
+        datetime_str = f"{race_date} {cleaned_time_str}"
+        # Attempt to convert the combined string to a datetime object
+        return pd.to_datetime(datetime_str)
     except ValueError:
         # If conversion fails, append 'AM' and try again
-        return pd.to_datetime(cleaned_time_str + ' AM')
+        datetime_str = f"{race_date} {cleaned_time_str} AM"
+        return pd.to_datetime(datetime_str)
 
 
 def combine_infractions(infractions):
@@ -135,11 +138,12 @@ def generate_graph(race_id: int, athletes):
     judge_calls_data = read_judge_calls_data(race_id, athletes)
     bib_data = read_bib_data()
     name_data = read_id_data()
-    # print(f"bib_data:\n{bib_data.to_string()}\n")
-    # print(f"name_data:\n{name_data.to_string()}\n")
-
+    
     loc_data['Time'] = pd.to_datetime(loc_data['Time'])
-    judge_calls_data['TOD'] = judge_calls_data['TOD'].apply(convert_time)
+    race_date = loc_data['Time'].iloc[0].date()
+
+    judge_calls_data['TOD'] = judge_calls_data['TOD'].apply(convert_time, args=(race_date,))
+
 
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
@@ -175,8 +179,6 @@ def generate_graph(race_id: int, athletes):
     for runner_id in athletes:
         runner_id = int(float(runner_id))
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
-        # print(f"LOC DATA: \n {loc_data_runner}")
-        # print(f"MERGED DATA: \n {merged_data}")
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
 
         if loc_data_runner.empty:
@@ -215,7 +217,6 @@ def generate_graph(race_id: int, athletes):
         # Add judge call markers
         color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
         judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
-
         added_judges = set()
         # Iterate over the original judge_calls_data to populate the legend
         for _, row in judge_calls_data.iterrows():
@@ -232,14 +233,13 @@ def generate_graph(race_id: int, athletes):
             'FirstName': lambda x: ', '.join(x),
             'LastName': lambda x: ', '.join(x)
         }).reset_index()
-
+        # print(grouped_judge_calls)
         for _, row in grouped_judge_calls[grouped_judge_calls['BibNumber'] == runner_id].iterrows():
             nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
             after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']].iloc[:1]
 
             if not nearest_before.empty and not after_calls.empty:
                 nearest_before_time = nearest_before['Time'].iloc[0]
-                t1 = 0
                 t2 = (after_calls['Time'].iloc[0] - nearest_before_time).total_seconds()
                 t3 = (pd.to_datetime(row['TOD']) - nearest_before_time).total_seconds()
 
