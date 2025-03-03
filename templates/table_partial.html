@@ -50,7 +50,7 @@
     <div class="pagination">
         {% if content.current_page > 1 %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
             hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Previous</a>
         {% endif %}
 
@@ -58,7 +58,7 @@
 
         {% if content.current_page < content.total_pages %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
             hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Next</a>
         {% endif %}
     </div>

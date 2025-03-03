@@ -67,6 +67,7 @@ def load_table(table):
             "total_rows": total_rows,
             "sort_by": sort_by,
             "order": order,
+            "search_term": search_term,
         },
         page=page,
     )
