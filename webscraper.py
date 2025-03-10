@@ -26,6 +26,9 @@ def web_scraper():
     progressions_data = progressions.to_dict(orient="records")
     honors_data = honors.to_dict(orient="records")
 
+    athlete_name = athletes_data[0]['name'] if athletes_data else "Unknown Athlete"
+    profile_image_url = athletes_data[0]["profile_image_url"] if athletes_data else None
+
     def time_to_seconds(time_str):
         """
         Convert time strings (e.g., '1:30:45' or '45:30') to seconds.
@@ -64,6 +67,8 @@ def web_scraper():
     # Pass the data to the template
     return render_template(
         'web_scraper.html',
+        athlete_name=athlete_name,
+        profile_image_url=profile_image_url,
         athletes=athletes_data,
         rankings=rankings_data,
         personal_bests=personal_bests_data,

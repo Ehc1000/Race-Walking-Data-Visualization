@@ -35,52 +35,10 @@
 {% block content %}
     <h1>Scraped Data</h1>
 
-    <!-- Average Times Table -->
-    <h2>Average Times by Event</h2>
-    {% if average_times %}
-        <table>
-            <thead>
-            <tr>
-                <th>Event</th>
-                <th>Average Time</th>
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in average_times %}
-                <tr>
-                    <td>{{ row.event_title }}</td>
-                    <td>{{ row.AverageTime }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No average times available.</p>
-    {% endif %}
-
-    <!-- Athletes Table -->
-    <h2>Athletes</h2>
-    {% if athletes %}
-        <table>
-            <thead>
-            <tr>
-                {% for col in athletes[0].keys() %}
-                    <th>{{ col }}</th>
-                {% endfor %}
-            </tr>
-            </thead>
-            <tbody>
-            {% for row in athletes %}
-                <tr>
-                    {% for value in row.values() %}
-                        <td>{{ value }}</td>
-                    {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No data available for athletes.</p>
+    <!-- Athlete Profile -->
+    {% if profile_image_url %}
+        <h2>{{ athlete_name }}</h2>
+        <img src="{{ profile_image_url }}" alt="Athlete Image">
     {% endif %}
 
     <!-- Rankings Table -->
