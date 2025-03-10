@@ -19,6 +19,8 @@ def web_scraper():
     progressions = display_table("scraped_data.db", "progressions")
     honors = display_table("scraped_data.db", "honors")
 
+    rankings = rankings.fillna("-")
+    
     # Convert DataFrames to lists of dictionaries for easier rendering in Jinja2
     athletes_data = athletes.to_dict(orient="records")
     rankings_data = rankings.to_dict(orient="records")
@@ -83,5 +85,3 @@ def runs_only_when_ran_from_command_line():
 
 if __name__ == '__main__':
     runs_only_when_ran_from_command_line()
-
-
