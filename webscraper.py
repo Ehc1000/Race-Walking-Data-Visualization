@@ -19,12 +19,17 @@ def web_scraper():
     progressions = display_table("scraped_data.db", "progressions")
     honors = display_table("scraped_data.db", "honors")
 
+    rankings = rankings.fillna("-")
+    
     # Convert DataFrames to lists of dictionaries for easier rendering in Jinja2
     athletes_data = athletes.to_dict(orient="records")
     rankings_data = rankings.to_dict(orient="records")
     personal_bests_data = personal_bests.to_dict(orient="records")
     progressions_data = progressions.to_dict(orient="records")
     honors_data = honors.to_dict(orient="records")
+
+    athlete_name = athletes_data[0]['name'] if athletes_data else "Unknown Athlete"
+    profile_image_url = athletes_data[0]["profile_image_url"] if athletes_data else None
 
     def time_to_seconds(time_str):
         """
@@ -64,6 +69,8 @@ def web_scraper():
     # Pass the data to the template
     return render_template(
         'web_scraper.html',
+        athlete_name=athlete_name,
+        profile_image_url=profile_image_url,
         athletes=athletes_data,
         rankings=rankings_data,
         personal_bests=personal_bests_data,
@@ -78,5 +85,3 @@ def runs_only_when_ran_from_command_line():
 
 if __name__ == '__main__':
     runs_only_when_ran_from_command_line()
-
-
