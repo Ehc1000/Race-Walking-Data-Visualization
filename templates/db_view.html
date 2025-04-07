@@ -1,12 +1,13 @@
-<html>
+{% extends "base.html" %}
 
-<head>
+{% block title %}Database Tables{% endblock %}
+
+{% block head_bottom %}
     <script src="https://unpkg.com/htmx.org"></script>
     <script src="https://unpkg.com/htmx.org/dist/ext/intersection-observer.js"></script>
-    <link rel="stylesheet" href="../static/db_view.css">
-</head>
+{% endblock %}
 
-<body>
+{% block content %}
     <nav>
         <h1>Database Tables</h1>
         <div>
@@ -15,7 +16,7 @@
             {% endfor %}
         </div>
     </nav>
-    <div class="tables-wrapper">
+    <div class="table-wrapper">
         <div hx-ext="intersection-observer">
             {% for table in tables %}
             <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}?page=1&per_page=10"
@@ -25,6 +26,4 @@
             {% endfor %}
         </div>
     </div>
-</body>
-
-</html>
+{% endblock %}

@@ -1,0 +1,14 @@
+[
+  {
+    "file": "CopyNewAthletesFromStaging2Production.sql",
+    "name": "Copy New Athletes From Staging To Production"
+  },
+  {
+    "file": "UpdateBibNumbersForNewRace.sql",
+    "name": "Update Bib Numbers For New Race"
+  },
+  {
+    "file": "UpdateNewAthleteIDs.sql",
+    "name": "Update New Athlete IDs"
+  }
+]

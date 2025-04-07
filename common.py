@@ -6,34 +6,10 @@ import pandas as pd
 
 # https://docs.python.org/3/library/sqlite3.html
 
-QUERY_FOLDER = "sql/"
-LABELED_QUERY_FOLDER = "sql-read/"
+LABELED_QUERY_FOLDER = "reports/"
 TMP_FOLDER = "tmp/"
 DB_FOLDER = "db/"
 PARAMETER_DEFAULTS = {"race_id": 1}
-
-
-# NORMAL QUERY OPERATIONS
-
-def df_from_query(query_file, db_file, params=()):
-    with open(f"{QUERY_FOLDER}{query_file}", "r") as sql_file:
-        sql_query = sql_file.read()
-    with sql.connect(f"{DB_FOLDER}/{db_file}") as conn:
-        df = pd.read_sql_query(sql_query, conn, params=params)
-    return df
-
-
-def get_all_queries():
-    return [f for f in os.listdir(QUERY_FOLDER) if f.endswith(".sql")]
-
-
-def get_parameter_count(query_file):
-    with open(f"{QUERY_FOLDER}{query_file}", "r") as sql_file:
-        sql_query = sql_file.read()
-    return sql_query.count("?")
-
-
-# LABELED QUERY OPERATIONS
 
 def df_from_labeled_query(query_file, db_file, params=None):
     # pycharm gets mad when you use a mutable object as a default argument

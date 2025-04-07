@@ -34,8 +34,7 @@ else:
         os.chmod(WKHTMLTOPDF_PATH, 0o755)
 
 
-tables_bp = Blueprint("tables", __name__)
-
+reports_bp = Blueprint("reports", __name__)
 
 def generate_table():
     # converts the multidict of arguments to a normal dict
@@ -43,7 +42,7 @@ def generate_table():
     # whereas a multidict can have a multiple values for each key
     query_params = request.args.to_dict()
     query_file = query_params.pop("query", "AthleteInfractions.sql")
-    db_file = query_params.pop("db", "RWComplete.db")
+    db_file = query_params.pop("db", "aaaaRWComplete.db")
     table_style = query_params.pop("style", "table")
 
     # collects all the needed named parameter values for the query, setting to a default if not specified
@@ -54,14 +53,14 @@ def generate_table():
         df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
         html_table = df.to_html(classes=table_style, index=False)
     except Exception as e:
-        if db_file == "DrexelRaceWalking.db":
+        if db_file == "aaaaaDrexelRaceWalking.db":
             html_table = "<p>The Drexel race walking database does not support this query.</p>"
         else:
             html_table = f"<p>Query failed for the following reason:</p><p>{str(e)}</p>"
     return needed_params, html_table, db_file, query_file, table_style, query_params
 
 
-@tables_bp.route("/download_pdf")
+@reports_bp.route("/download_pdf")
 def download_pdf():
     if not pdfkit:
         return "PDF generation is not available because pdfkit or wkhtmltopdf is not installed."
@@ -80,7 +79,7 @@ def download_pdf():
     return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
 
 
-@tables_bp.route("/")
+@reports_bp.route("/")
 def display_table():
     needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
     query_options = cmn.get_all_labeled_queries()
@@ -92,7 +91,7 @@ def display_table():
         race['IDRace'] = str(race['IDRace'])
 
     return render_template(
-        "tables.html",
+        "reports.html",
         table=html_table,
         table_style=table_style,
         db_file=db_file,

@@ -76,7 +76,7 @@
     {% endif %}
 
     <div class="card p-4 mb-4">
-        <form action="{{ url_for("tables.download_pdf") }}" method="get">
+        <form action="{{ url_for("reports.download_pdf") }}" method="get">
             <input type="hidden" name="query" value="{{ query_file }}">
             <input type="hidden" name="db" value="{{ db_file }}">
             <input type="hidden" name="style" value="{{ table_style }}">
