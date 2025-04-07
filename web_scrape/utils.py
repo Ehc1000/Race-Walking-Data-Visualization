@@ -4,9 +4,9 @@ logging.basicConfig(
     filename="web_scrape.log",
     filemode="w",
     format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt='%Y-%m-%d %H:%M:%S',  # Formats time up to seconds
+    datefmt='%Y-%m-%d %H:%M:%S',
     level=logging.INFO,
-    encoding="utf-8" #TODO: Look into if SQL can do this encoding
+    encoding="utf-8"
 )
 
 def log(message, level="info"):

@@ -218,13 +218,6 @@ def get_world_rankings(athlete_id):
     except Exception as e:
         u.log(f"Error getting world rankings: {e}", "error")
 
-def get_season_bests(): #TODO: implement
-    #TODO: click the dropdown list to iterate through all the years, no idea how
-    #athletesTitle_athletesTitle__388RT this has the card's race title
-    #profileStatistics_personnalBestCardWrapper__-09Nt -- this is the wrapper holding all the data
-    #profileStatistics_personnalBestCardContent__1GplY -- this has the race title, the date and flag name
-    return
-
 def get_personal_bests(athlete_id):
     """
     Scrapes and stores the athlete's personal bests for various events from the webpage.
@@ -299,7 +292,7 @@ def get_personal_bests(athlete_id):
     except Exception as e:
         u.log(f"Error getting personal bests: {e}", "error")
 
-def get_progression(athlete_id): #BUG: For some reason Row 9 of Table 1 always has missing data???
+def get_progression(athlete_id): #BUG: For some reason Row 9 of Table 1 always has missing data
     """
     Scrapes and stores the athlete's progression data from the webpage.
 
@@ -376,8 +369,6 @@ def get_progression(athlete_id): #BUG: For some reason Row 9 of Table 1 always h
                     u.log(f"Error processing row {row_index + 1} in table '{table_title}': {row_error}", "error")
     except Exception as e:
         u.log(f"Error getting progression data: {e}", "error")
-
-#def get_results() #TODO: implement
 
 def get_honours(athlete_id):
     """
