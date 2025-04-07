@@ -21,7 +21,7 @@ def data():
 
 @data_bp.route("/load_table/<table>")
 def load_table(table):
-    db_file = request.args.get("db", "RWComplete.db")
+    db_file = request.args.get("db", "db/RWComplete.db")
 
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
@@ -77,7 +77,7 @@ def load_table(table):
 def update_cell(table, column, pk):
     new_value = request.form.get("value")
     print(f"Form data: {request.form}")
-    db_file = request.args.get("db", "RWComplete.db")
+    db_file = request.args.get("db", "aaaaRWComplete.db")
 
     try:
         with sql.connect(db_file) as conn:

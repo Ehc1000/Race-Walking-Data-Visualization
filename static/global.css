@@ -56,7 +56,13 @@ nav a:hover {
     color: #2d3748;
 }
 
-.tables-wrapper {
+nav a.active {
+    background: #edf2f7;
+    color: #2d3748;
+    font-weight: bold;
+}
+
+.content-wrapper {
     max-width: 900px;
     margin: 0 auto;
     padding: 2rem;
@@ -85,6 +91,10 @@ nav a:hover {
     color: #2d3748;
     background: linear-gradient(to right, #e2e8f0, #edf2f7);
     border-radius: 8px 8px 0 0;
+}
+
+.table-scroll {
+    overflow-x: auto;
 }
 
 table {

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Task Runner{% endblock %}
+
+{% block content %}
+    <h1>Task Runner</h1>
+    {% for task in tasks %}
+        <form method="POST" action="{{ url_for('tasks.run_task', file=task.file) }}">
+            <button type="submit">{{ task.name }}</button>
+        </form>
+    {% endfor %}
+{% endblock %}

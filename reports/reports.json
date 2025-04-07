@@ -1,0 +1,90 @@
+[
+  {
+    "file": "AllRaces.sql",
+    "name": "All Races"
+  },
+  {
+    "file": "AthleteInfractions.sql",
+    "name": "Athlete Infractions"
+  },
+  {
+    "file": "AverageBentKneeByAthleteAcrossAllObservations.sql",
+    "name": "Average Bent Knee By Athlete Across All Observations"
+  },
+  {
+    "file": "AverageLOCByAthleteAcross2WorstObservations.sql",
+    "name": "Average LOC By Athlete Across 2 Worst Observations"
+  },
+  {
+    "file": "AverageLOCByAthleteAcrossAllObservations.sql",
+    "name": "Average LOC By Athlete Across All Observations"
+  },
+  {
+    "file": "ConsistencyDiscrepancies.sql",
+    "name": "Consistency Discrepancies"
+  },
+  {
+    "file": "IndividualJudgeCallsVsVideoObservations.sql",
+    "name": "Individual Judge Calls Vs Video Observations"
+  },
+  {
+    "file": "InfractionSummaryByJudge.sql",
+    "name": "Infraction Summary By Judge"
+  },
+  {
+    "file": "JudgeConsistencyDiscrepancy.sql",
+    "name": "Judge Consistency Discrepancy"
+  },
+  {
+    "file": "JudgeConsistencyMissed.sql",
+    "name": "Judge Consistency Missed"
+  },
+  {
+    "file": "LegalAthletesWith3OrMoreRedCards.sql",
+    "name": "Legal Athletes With 3 Or More Red Cards"
+  },
+  {
+    "file": "ListAllJudgesInARace.sql",
+    "name": "List All Judges In A Race"
+  },
+  {
+    "file": "MajorityMatched.sql",
+    "name": "Majority Matched"
+  },
+  {
+    "file": "RedCardsWithoutYellowPaddle.sql",
+    "name": "Red Cards Without Yellow Paddle"
+  },
+  {
+    "file": "TotalScore.sql",
+    "name": "Total Score"
+  },
+  {
+    "file": "TotalScore55.sql",
+    "name": "Total Score 55"
+  },
+  {
+    "file": "TotalScoreExtraColumn.sql",
+    "name": "Total Score Extra Column"
+  },
+  {
+    "file": "VideoObservationsInfractionTotals.sql",
+    "name": "Video Observations Infraction Totals"
+  },
+  {
+    "file": "VideoObservationsInfractionsStaticPanned.sql",
+    "name": "Video Observations Infractions Static Panned"
+  },
+  {
+    "file": "VideoObservationsInfractionsTotal.sql",
+    "name": "Video Observations Infractions Total"
+  },
+  {
+    "file": "VideoObservationsPannedInfractionsTotal.sql",
+    "name": "Video Observations Panned Infractions Total"
+  },
+  {
+    "file": "YellowPaddlesWithoutRedCards.sql",
+    "name": "Yellow Paddles Without Red Cards"
+  }
+]

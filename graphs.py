@@ -9,7 +9,7 @@ from bokeh.embed import components
 
 graphs_bp = Blueprint('graphs', __name__)
 # Database connection
-conn = sqlite3.connect('DrexelRaceWalking.db', check_same_thread=False)
+conn = sqlite3.connect('db/DrexelRaceWalking.db', check_same_thread=False)
 
 
 def read_loc_data(race_id, athlete_ids):
@@ -298,6 +298,11 @@ def graphs(race_id):
 
     # Render the template with race_ids, race_id, and athlete_ids
     return render_template('graphs.html', race_ids=race_ids, race_id=race_id, athlete_ids=athletes)
+
+@graphs_bp.route('', methods=['GET'])
+@graphs_bp.route('/', methods=['GET'])
+def graphs_default():
+    return redirect('/graphs/race/1')
 
 @graphs_bp.route('/generate_graph/<int:race_id>', methods=['POST'])
 def generate_graph_route(race_id):

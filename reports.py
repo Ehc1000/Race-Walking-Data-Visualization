@@ -34,8 +34,7 @@ else:
         os.chmod(WKHTMLTOPDF_PATH, 0o755)
 
 
-tables_bp = Blueprint("tables", __name__)
-
+reports_bp = Blueprint("reports", __name__)
 
 def generate_table():
     # converts the multidict of arguments to a normal dict
@@ -61,7 +60,7 @@ def generate_table():
     return needed_params, html_table, db_file, query_file, table_style, query_params
 
 
-@tables_bp.route("/download_pdf")
+@reports_bp.route("/download_pdf")
 def download_pdf():
     if not pdfkit:
         return "PDF generation is not available because pdfkit or wkhtmltopdf is not installed."
@@ -72,15 +71,14 @@ def download_pdf():
     pdf_output_path = f"{cmn.TMP_FOLDER}{pdf_name}"
     os.makedirs(cmn.TMP_FOLDER, exist_ok=True)
     css_files = [
-        "static/bootstrap/css/bootstrap.css",
-        "static/tables.css"
+        "static/global.css"
     ]
 
     pdfkit.from_string(html_table, pdf_output_path, css=css_files, configuration=CONFIG)
     return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
 
 
-@tables_bp.route("/")
+@reports_bp.route("/")
 def display_table():
     needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
     query_options = cmn.get_all_labeled_queries()
@@ -92,7 +90,7 @@ def display_table():
         race['IDRace'] = str(race['IDRace'])
 
     return render_template(
-        "tables.html",
+        "reports.html",
         table=html_table,
         table_style=table_style,
         db_file=db_file,

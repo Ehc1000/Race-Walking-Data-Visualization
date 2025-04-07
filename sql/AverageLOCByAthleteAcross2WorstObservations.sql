@@ -1,7 +1,0 @@
-SELECT Athlete.IDAThlete, LOCData.BibNumber, ROUND(AVG(LOCData.LOCAverage),1) AS LOCAverage, COUNT(LOCData.BibNumber) As NbrMeasurements, Athlete.LastName, Athlete.FirstName FROM (
-SELECT IDAthlete, BibNumber, LOCAverage, RANK() OVER (Partition by BibNumber Order by LOCAverage DESC) LOCRank FROM VideoObservation WHERE IDRace = ?) LOCData
-INNER JOIN Athlete ON Athlete.IDAthlete=LOCData.IDAthlete
-WHERE LOCData.LOCRank < ? AND LOCData.LOCAverage >=?
-GROUP BY LOCData.BibNumber
-HAVING LOCData.LOCAverage >= ? AND COUNT(LOCData.BibNumber)>=2
-ORDER BY ROUND(AVG(LOCData.LOCAverage),1) DESC

@@ -9,48 +9,50 @@
             hx-trigger="keyup[key=='Enter']"
             style="padding: 5px; font-size: 14px;" />
     </h2>
-    <table border="1" id="{{ table }}">
-        <thead>
-            <tr>
-                {% for col in content.columns %}
-                <th>
-                    <a href="#" hx-get="{{ url_for('data.load_table', 
-                            table=table, 
-                            sort=col,
-                            order='desc' if content.sort_by == col and content.order == 'asc' else 'asc',
-                            page=1) }}" hx-swap="outerHTML" hx-target="closest div">
-                        {{ col }}
-                        {% if content.sort_by == col %}
-                        {{ '▼' if content.order == 'desc' else '▲' }}
-                        {% endif %}
-                    </a>
-                </th>
+    <div class="table-scroll">
+        <table border="1" id="{{ table }}">
+            <thead>
+                <tr>
+                    {% for col in content.columns %}
+                    <th>
+                        <a href="#" hx-get="{{ url_for('data.load_table', 
+                                table=table, 
+                                sort=col,
+                                order='desc' if content.sort_by == col and content.order == 'asc' else 'asc',
+                                page=1) }}" hx-swap="outerHTML" hx-target="closest div">
+                            {{ col }}
+                            {% if content.sort_by == col %}
+                            {{ '▼' if content.order == 'desc' else '▲' }}
+                            {% endif %}
+                        </a>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in content.rows %}
+                <tr>
+                    {% for item in row %}
+                    <td>
+                        <div class="editable" 
+                            hx-target="closest td"
+                            hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
+                            contenteditable="true" 
+                            hx-trigger="edit-confirm" 
+                            hx-swap="outerHTML"
+                            hx-include="next input[name='value']" 
+                            onfocus="storeOriginalValue(this)"
+                            onblur="confirmEdit(this)">
+                            {{ item }}
+                        </div>
+                        <input type="hidden" name="value" value="{{ item }}" />
+                    </td>
+                    {% endfor %}
+                </tr>
                 {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in content.rows %}
-            <tr>
-                {% for item in row %}
-                <td>
-                    <div class="editable" 
-                        hx-target="closest td"
-                        hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
-                        contenteditable="true" 
-                        hx-trigger="edit-confirm" 
-                        hx-swap="outerHTML"
-                        hx-include="next input[name='value']" 
-                        onfocus="storeOriginalValue(this)"
-                        onblur="confirmEdit(this)">
-                        {{ item }}
-                    </div>
-                    <input type="hidden" name="value" value="{{ item }}" />
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 
     <div class="pagination">
         {% if content.current_page > 1 %}
