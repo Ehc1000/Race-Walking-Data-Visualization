@@ -8,11 +8,11 @@ from webscraper import webscraper_bp
 app = Flask(__name__)
 
 blueprints = [
-    (data_bp, "Data Modifier", "/data"),
     (graphs_bp, "Data Graphs", "/graphs"),
     (reports_bp, "Report Generator", "/reports"),
     (webscraper_bp, "Web Scraper", "/webscraper"),
-    (tasks_bp, "Task Runner", "/tasks")
+    (tasks_bp, "Task Runner", "/tasks"),
+    (data_bp, "Data Modifier", "/data")
 ]
 
 nav_items = []

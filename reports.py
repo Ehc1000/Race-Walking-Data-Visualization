@@ -42,7 +42,7 @@ def generate_table():
     # whereas a multidict can have a multiple values for each key
     query_params = request.args.to_dict()
     query_file = query_params.pop("query", "AthleteInfractions.sql")
-    db_file = query_params.pop("db", "aaaaRWComplete.db")
+    db_file = query_params.pop("db", "RWComplete.db")
     table_style = query_params.pop("style", "table")
 
     # collects all the needed named parameter values for the query, setting to a default if not specified
@@ -53,7 +53,7 @@ def generate_table():
         df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
         html_table = df.to_html(classes=table_style, index=False)
     except Exception as e:
-        if db_file == "aaaaaDrexelRaceWalking.db":
+        if db_file == "DrexelRaceWalking.db":
             html_table = "<p>The Drexel race walking database does not support this query.</p>"
         else:
             html_table = f"<p>Query failed for the following reason:</p><p>{str(e)}</p>"
@@ -71,8 +71,7 @@ def download_pdf():
     pdf_output_path = f"{cmn.TMP_FOLDER}{pdf_name}"
     os.makedirs(cmn.TMP_FOLDER, exist_ok=True)
     css_files = [
-        "static/bootstrap/css/bootstrap.css",
-        "static/tables.css"
+        "static/global.css"
     ]
 
     pdfkit.from_string(html_table, pdf_output_path, css=css_files, configuration=CONFIG)

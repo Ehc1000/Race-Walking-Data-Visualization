@@ -56,6 +56,12 @@ nav a:hover {
     color: #2d3748;
 }
 
+nav a.active {
+    background: #edf2f7;
+    color: #2d3748;
+    font-weight: bold;
+}
+
 .content-wrapper {
     max-width: 900px;
     margin: 0 auto;

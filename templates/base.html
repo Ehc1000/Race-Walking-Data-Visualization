@@ -9,14 +9,15 @@
 </head>
 <body>
 <nav>
-
     <div>
-        <a href="/"><strong>Race Walking</strong></a>
+        <a href="/" class="{% if request.path == '/' or request.path == ' ' %}active{% endif %}">Home</a>
         {% for item in nav_items %}
-        <a href="{{ item.url }}" class="{% if request.path.startswith(item.url) %}active{% endif %}">
-            {{ item.label }}
-        </a>
+            <a href="{{ item.url }}" class="{% if request.path.startswith(item.url) %}active{% endif %}">
+                {{ item.label }}
+            </a>
         {% endfor %}
+        {% block nav_bottom %}
+    {% endblock %}
     </div>
 </nav>
 

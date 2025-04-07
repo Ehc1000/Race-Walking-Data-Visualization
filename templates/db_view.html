@@ -8,22 +8,18 @@
 {% endblock %}
 
 {% block content %}
-    <nav>
-        <h1>Database Tables</h1>
-        <div>
-            {% for table in tables %}
-            <a href="#{{ table }}">{{ table }}</a>
-            {% endfor %}
+    <div hx-ext="intersection-observer">
+        {% for table in tables %}
+        <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}?page=1&per_page=10"
+            hx-trigger="intersect once" hx-swap="outerHTML" id="{{ table }}">
+            Loading {{ table }}...
         </div>
-    </nav>
-    <div class="table-wrapper">
-        <div hx-ext="intersection-observer">
-            {% for table in tables %}
-            <div class="table-placeholder" hx-get="{{ url_for('data.load_table', table=table) }}?page=1&per_page=10"
-                hx-trigger="intersect once" hx-swap="outerHTML" id="{{ table }}">
-                Loading {{ table }}...
-            </div>
-            {% endfor %}
-        </div>
+        {% endfor %}
     </div>
+{% endblock %}
+
+{% block nav_bottom %}
+    {% for table in tables %}
+    <a href="#{{ table }}">{{ table }}</a>
+    {% endfor %}
 {% endblock %}
