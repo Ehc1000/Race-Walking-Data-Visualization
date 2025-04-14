@@ -152,7 +152,7 @@ def generate_graph(race_id: int, athletes):
     max_time = loc_data['Time'].max()
     time_range = max_time - min_time
     buffer_seconds_y = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis from the left
-    buffer_seconds_x = time_range.total_seconds() * 0.35  # 35% buffer to extend x-axis from the right to account for the athelte leegnd covering the data
+    buffer_seconds_x = time_range.total_seconds() * 0.40  # 40% buffer to extend x-axis from the right to account for the athelte leegnd covering the data
     buffer_y = pd.Timedelta(seconds=buffer_seconds_y)
     buffer_x = pd.Timedelta(seconds=buffer_seconds_x)
     extended_min_time = min_time - buffer_y
