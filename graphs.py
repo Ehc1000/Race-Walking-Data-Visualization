@@ -152,7 +152,7 @@ def generate_graph(race_id: int, athletes):
     max_time = loc_data['Time'].max()
     time_range = max_time - min_time
     buffer_seconds_y = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis from the left
-    buffer_seconds_x = time_range.total_seconds() * 0.3  # 30% buffer to extend x-axis from the right to account for the athelte leegnd covering the data
+    buffer_seconds_x = time_range.total_seconds() * 0.35  # 30% buffer to extend x-axis from the right to account for the athelte leegnd covering the data
     buffer_y = pd.Timedelta(seconds=buffer_seconds_y)
     buffer_x = pd.Timedelta(seconds=buffer_seconds_x)
     extended_min_time = min_time - buffer_y
@@ -163,7 +163,7 @@ def generate_graph(race_id: int, athletes):
         title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
         x_axis_type="datetime", 
         width=1920, 
-        height=940,
+        height=1040,
         sizing_mode="scale_width",
         x_range=(extended_min_time, extended_max_time)
     )
@@ -280,7 +280,7 @@ def generate_graph(race_id: int, athletes):
     sorted_judge_items = sorted(judge_legend_dict.items())
     judge_legend_items = [LegendItem(label=label) for _, label in sorted_judge_items]
     judge_legend = Legend(items=judge_legend_items)
-    judge_legend.location = "right"
+    judge_legend.location = "bottom_right"
     p.add_layout(judge_legend)
     script, div = components(p)
     return script, div, athletes_with_no_data
