@@ -85,22 +85,17 @@
                 {% endfor %}
             </select>
 
-            <div class="buttons">
-                <button type="button" onclick="moveToSelected()">→</button>
-                <button type="button" onclick="moveToAvailable()">←</button>
-            </div>
-
-            <div>
-                <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
-                </select>
-            </div>
+            <select id="selectedAthletes" name="selected_athletes" class="list-box" multiple>
+            </select>
         </div>
+        <p class="instructions" style="font-size: 14px; color: #555; margin-top: 5px;">
+            Double-click an athlete to select or deselect (maximum of 10 selections).
+        </p>
 
         <button type="submit" class="submit">Generate Graph</button>
     </form>
 
     <div id="graph-container" style="width: 100%; height: auto; margin: 0 auto;">
-        <!-- Warning box will be included here by HTMX -->
         {% if div %}
             {{ div | safe }}
         {% endif %} 
@@ -117,59 +112,50 @@
             const countText = `Selected: ${selectedCount}/10`;
             document.getElementById('selectedCount').textContent = countText;
         }
-
+    
         function moveToSelected() {
             const available = document.getElementById('availableAthletes');
             const selected = document.getElementById('selectedAthletes');
             const selectedOptions = [...available.selectedOptions];
-
-            // Get how many spaces are left in the selected list (max 10)
+    
+            // Limit to a maximum of 10 athletes
             let spaceLeft = 10 - selected.options.length;
-
-            if (spaceLeft <= 0) {
-                return; // Do nothing if already at max capacity
-            }
-
+            if (spaceLeft <= 0) return;
+    
             // Move only up to the allowed limit
             selectedOptions.slice(0, spaceLeft).forEach(option => {
                 selected.add(option);
             });
             updateSelectedCount();
-            updateButtonState();
         }
-
+    
         function moveToAvailable() {
             const available = document.getElementById('availableAthletes');
             const selected = document.getElementById('selectedAthletes');
             const selectedOptions = [...selected.selectedOptions];
-
+    
             selectedOptions.forEach(option => {
                 available.add(option);
             });
             updateSelectedCount();
-            updateButtonState();
         }
-
-        function updateButtonState() {
-            const moveToSelectedBtn = document.querySelector('button[onclick="moveToSelected()"]');
-            const moveToAvailableBtn = document.querySelector('button[onclick="moveToAvailable()"]');
-            const available = document.getElementById('availableAthletes');
+    
+        // Attach double-click event handlers to each list
+        document.getElementById('availableAthletes').addEventListener('dblclick', moveToSelected);
+        document.getElementById('selectedAthletes').addEventListener('dblclick', moveToAvailable);
+    
+        // Update selected count when selections change
+        document.getElementById('availableAthletes').addEventListener('change', updateSelectedCount);
+        document.getElementById('selectedAthletes').addEventListener('change', updateSelectedCount);
+    
+        // Before form submission, mark all options in the selected list as selected.
+        document.querySelector('form').addEventListener('submit', function() {
             const selected = document.getElementById('selectedAthletes');
-
-            moveToSelectedBtn.disabled = available.selectedOptions.length === 0 || selected.options.length >= 10;
-            moveToAvailableBtn.disabled = selected.selectedOptions.length === 0;
-        }
-
-        // Call updateButtonState and updateSelectedCount when selection changes
-        document.getElementById('availableAthletes').addEventListener('change', () => {
-            updateButtonState();
-            updateSelectedCount();
+            for (let i = 0; i < selected.options.length; i++) {
+                selected.options[i].selected = true;
+            }
         });
-        document.getElementById('selectedAthletes').addEventListener('change', () => {
-            updateButtonState();
-            updateSelectedCount();
-        });
-
+    
         // Initialize the selected count on page load
         updateSelectedCount();
     </script>
