@@ -181,6 +181,29 @@ def generate_graph(race_id: int, athletes):
         loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
         loc_data_runner = pd.merge(loc_data_runner, merged_data, on='BibNumber')
 
+        # Extend athlete LOC data to last infraction time
+        athlete_calls = judge_calls_data[judge_calls_data['BibNumber'] == runner_id]
+        if not athlete_calls.empty:
+            last_infraction_time = athlete_calls['TOD'].max()
+            if last_infraction_time > loc_data_runner['Time'].max():
+                # Find two nearest LOC points before and after the last infraction
+                before = loc_data_runner[loc_data_runner['Time'] <= last_infraction_time].iloc[-1:]
+                after = loc_data_runner[loc_data_runner['Time'] > last_infraction_time].iloc[:1]
+
+                if not before.empty and not after.empty:
+                    t1 = before['Time'].iloc[0]
+                    t2 = after['Time'].iloc[0]
+                    loc1 = before['LOC'].iloc[0]
+                    loc2 = after['LOC'].iloc[0]
+                    seconds_diff = (t2 - t1).total_seconds()
+                    if seconds_diff != 0:
+                        slope = (loc2 - loc1) / seconds_diff
+                        t3 = (last_infraction_time - t1).total_seconds()
+                        extrapolated_loc = loc1 + (slope * t3)
+                        extended_row = before.copy()
+                        extended_row['Time'] = last_infraction_time
+                        extended_row['LOC'] = extrapolated_loc
+                        loc_data_runner = pd.concat([loc_data_runner, extended_row], ignore_index=True)
         if loc_data_runner.empty:
             athletes_with_no_data.append(f"{runner_id}")
             print(f"No data found for runner ID {runner_id}. Skipping.")
