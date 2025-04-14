@@ -169,7 +169,7 @@ def generate_graph(race_id: int, athletes):
         title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
         x_axis_type="datetime", 
         width=1920, 
-        height=940,
+        height=1100,
         sizing_mode="scale_width",
         x_range=(extended_min_time, extended_max_time)
     )
@@ -277,6 +277,7 @@ def generate_graph(race_id: int, athletes):
 
             
     p.legend.location = "top_right"
+    p.legend.label_text_font_size = "6pt"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
     p.xaxis.axis_label = "Time"
@@ -286,7 +287,8 @@ def generate_graph(race_id: int, athletes):
     sorted_judge_items = sorted(judge_legend_dict.items())
     judge_legend_items = [LegendItem(label=label) for _, label in sorted_judge_items]
     judge_legend = Legend(items=judge_legend_items)
-    judge_legend.location = "right"
+    judge_legend.location = "bottom_right"
+    judge_legend.label_text_font_size = "6pt"
     p.add_layout(judge_legend)
     script, div = components(p)
     return script, div, athletes_with_no_data
