@@ -147,12 +147,51 @@ def generate_graph(race_id: int, athletes):
 
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
+    max_time_all = loc_data['Time'].max()
+    
+    # Add a point at max_time_all for each athlete if they don't have one
+    for runner_id in athletes:
+        runner_id = int(float(runner_id))
+        runner_data = loc_data[loc_data['BibNumber'] == runner_id]
+        if not runner_data.empty:
+            # Check if runner has a point at max_time_all
+            if not (runner_data['Time'] == max_time_all).any():
+                # Get last two points
+                last_points = runner_data.nlargest(2, 'Time')
+                if len(last_points) >= 2:
+                    t1 = last_points.iloc[-2]['Time']
+                    t2 = last_points.iloc[-1]['Time']
+                    loc1 = last_points.iloc[-2]['LOC']
+                    loc2 = last_points.iloc[-1]['LOC']
+                    
+                    # Calculate slope
+                    time_diff = (t2 - t1).total_seconds()
+                    loc_diff = loc2 - loc1
+                    if time_diff != 0:
+                        slope = loc_diff / time_diff
+                        
+                        # Extrapolate to max_time_all
+                        t3 = (max_time_all - t2).total_seconds()
+                        extrapolated_loc = loc2 + (slope * t3)
+                        
+                        # Create new row
+                        new_row = {
+                            'ID': runner_data.iloc[0]['ID'],
+                            'IDRace': runner_data.iloc[0]['IDRace'],
+                            'BibNumber': runner_id,
+                            'LOC': extrapolated_loc,
+                            'KneeAngle': runner_data.iloc[-1]['KneeAngle'],
+                            'Time': max_time_all
+                        }
+                        
+                        # Add to loc_data
+                        loc_data = pd.concat([loc_data, pd.DataFrame([new_row])], ignore_index=True)
 
     min_time = loc_data['Time'].min()
     max_time = loc_data['Time'].max()
     time_range = max_time - min_time
     buffer_seconds_y = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis from the left
-    buffer_seconds_x = time_range.total_seconds() * 0.40  # 40% buffer to extend x-axis from the right to account for the athelte leegnd covering the data
+    buffer_seconds_x = time_range.total_seconds() * 0.40  # 40% buffer to extend x-axis from the right to account for the athlete legend covering the data
     buffer_y = pd.Timedelta(seconds=buffer_seconds_y)
     buffer_x = pd.Timedelta(seconds=buffer_seconds_x)
     extended_min_time = min_time - buffer_y
