@@ -163,7 +163,7 @@ def generate_graph(race_id: int, athletes):
         title=f'Loss of Contact vs Judge Calls for Race {race_id}', 
         x_axis_type="datetime", 
         width=1920, 
-        height=1040,
+        height=1140,
         sizing_mode="scale_width",
         x_range=(extended_min_time, extended_max_time)
     )
