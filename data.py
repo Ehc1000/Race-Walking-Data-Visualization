@@ -106,3 +106,16 @@ def create_input_cell_html(request_path: str, new_value: str) -> str:
                     <input type="hidden" name="value" value="{new_value}" />
                 </td>
             """
+
+@data_bp.route("/delete_row/<table>/<pk>", methods=["DELETE"])
+def delete_row(table, pk):
+    db_file = request.args.get("db", "db/RWComplete.db")
+    try:
+        with sql.connect(db_file) as conn:
+            cursor = conn.cursor()
+            cursor.execute(f"DELETE FROM {table} WHERE rowid = ?", (pk,))
+            conn.commit()
+    except Exception as e:
+        return str(e), 400
+
+    return load_table(table)
