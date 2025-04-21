@@ -1,11 +1,12 @@
 <div class="table-container" id="table-container-{{ table }}">
     <h2 style="display: flex; justify-content: space-between; align-items: center;">
         Table: {{ table }}
-        <input type="text" name="search_term" placeholder="Search" 
-            value="{{ request.args.get('search_term', '') }}" 
-            hx-get="{{ url_for('data.load_table', table=table) }}" 
-            hx-target="#table-container-{{ table }}" 
-            hx-swap="outerHTML" 
+        <input type="text" name="search_term" placeholder="Search"
+            value="{{ content.search_term }}"
+            hx-get="{{ url_for('data.load_table', table=table) }}?page=1"
+            hx-target="#table-container-{{ table }}"
+            hx-swap="outerHTML"
+            hx-include="[name='search_term']"
             hx-trigger="keyup[key=='Enter']"
             style="padding: 5px; font-size: 14px;" />
     </h2>
@@ -17,12 +18,9 @@
                     {% for col in content.columns %}
                     <th>
                         <a href="#"
-                            hx-get="{{ url_for('data.load_table', 
-                                table=table, 
-                                sort=col,
-                                order='desc' if content.sort_by == col and content.order == 'asc' else 'asc',
-                                page=1) }}" 
-                            hx-swap="outerHTML" 
+                            hx-get="{{ url_for('data.load_table', table=table) }}?sort={{ col }}&order={{ 'desc' if content.sort_by == col and content.order == 'asc' else 'asc' }}&page=1"
+                            hx-include="[name='search_term']"
+                            hx-swap="outerHTML"
                             hx-target="closest .table-container">
                             {{ col }}
                             {% if content.sort_by == col %}
@@ -47,13 +45,13 @@
                     </td>
                     {% for item in row %}
                     <td>
-                        <div class="editable" 
+                        <div class="editable"
                             hx-target="closest td"
                             hx-patch="{{ url_for('data.update_cell', table=table, column=content.columns[loop.index0], pk=row[0]) }}"
-                            contenteditable="true" 
-                            hx-trigger="edit-confirm" 
+                            contenteditable="true"
+                            hx-trigger="edit-confirm"
                             hx-swap="outerHTML"
-                            hx-include="next input[name='value']" 
+                            hx-include="next input[name='value']"
                             onfocus="storeOriginalValue(this)">
                             {{ item }}
                         </div>
@@ -69,22 +67,25 @@
     <div class="pagination">
         {% if content.current_page > 1 %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
-            hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Previous</a>
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page - 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-include="[name='search_term']"
+            hx-target="#table-container-{{ table }}"
+            hx-swap="outerHTML">Previous</a>
         {% endif %}
 
         <span>Page {{ content.current_page }} of {{ content.total_pages }}</span>
 
         {% if content.current_page < content.total_pages %}
         <a href="#"
-            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}&search_term={{ content.search_term }}"
-            hx-target="#table-container-{{ table }}" hx-swap="outerHTML">Next</a>
+            hx-get="{{ url_for('data.load_table', table=table) }}?page={{ content.current_page + 1 }}&sort={{ content.sort_by }}&order={{ content.order }}"
+            hx-include="[name='search_term']"
+            hx-target="#table-container-{{ table }}"
+            hx-swap="outerHTML">Next</a>
         {% endif %}
     </div>
 </div>
 
 <script>
-
     function storeOriginalValue(element) {
         element.setAttribute('data-original-value', element.innerText);
     }
@@ -94,14 +95,12 @@
         const newRow = currentRow.cloneNode(true);
         const tds = newRow.querySelectorAll("td");
         tds.forEach((td, index) => {
-            if (index === 0) return; 
+            if (index === 0) return;
             const editableDiv = td.querySelector(".editable");
             const hiddenInput = td.querySelector("input[name='value']");
             editableDiv.innerText = "";
             hiddenInput.value = "";
         });
-
         currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
     }
-
 </script>
