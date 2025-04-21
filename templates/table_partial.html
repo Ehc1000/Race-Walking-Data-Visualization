@@ -40,6 +40,7 @@
                                 hx-swap="outerHTML">
                             Delete
                         </button>
+                        <button onclick="addEmptyRow(this)">Add Row</button>
                     </td>
                     {% for item in row %}
                     <td>
@@ -50,8 +51,7 @@
                             hx-trigger="edit-confirm" 
                             hx-swap="outerHTML"
                             hx-include="next input[name='value']" 
-                            onfocus="storeOriginalValue(this)"
-                            onblur="confirmEdit(this)">
+                            onfocus="storeOriginalValue(this)">
                             {{ item }}
                         </div>
                         <input type="hidden" name="value" value="{{ item }}" />
@@ -86,20 +86,19 @@
         element.setAttribute('data-original-value', element.innerText);
     }
 
-    function confirmEdit(element) {
-        let originalValue = element.getAttribute('data-original-value');
-        let newValue = element.innerText.trim();
-    
-        if (newValue !== originalValue) {
-            let isConfirmed = confirm("Do you want to save the changes?");
-            
-            if (isConfirmed) {
-                element.nextElementSibling.value = newValue;
-                element.setAttribute("hx-trigger", "edit-confirm");
-                element.dispatchEvent(new Event("edit-confirm"));
-            } else {
-                element.innerText = originalValue;
-            }
-        }
+    function addEmptyRow(button) {
+        const currentRow = button.closest("tr");
+        const newRow = currentRow.cloneNode(true);
+        const tds = newRow.querySelectorAll("td");
+        tds.forEach((td, index) => {
+            if (index === 0) return; 
+            const editableDiv = td.querySelector(".editable");
+            const hiddenInput = td.querySelector("input[name='value']");
+            editableDiv.innerText = "";
+            hiddenInput.value = "";
+        });
+
+        currentRow.parentNode.insertBefore(newRow, currentRow.nextSibling);
     }
+
 </script>
