@@ -6,7 +6,7 @@
     <h1>Task Runner</h1>
     {% for task in tasks %}
         <form method="POST" action="{{ url_for('tasks.run_task', file=task.file) }}">
-            <button type="submit">{{ task.name }}</button>
+            <button type="submit" class="mv10">{{ task.name }}</button>
         </form>
     {% endfor %}
 {% endblock %}

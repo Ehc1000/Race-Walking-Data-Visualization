@@ -11,7 +11,7 @@
             <!-- database selector -->
             <div class="col-md-4">
                 <label for="db-select" class="form-label">Choose a database:</label>
-                <select id="db-select" class="form-select" onchange="updateQueryParams('db', this.value)">
+                <select id="db-select" class="down-arrow" onchange="updateQueryParams('db', this.value)">
                     {% for db in db_options %}
                         <option value="{{ db }}" {% if db_file == db %}selected{% endif %}>{{ db }}</option>
                     {% endfor %}
@@ -21,7 +21,7 @@
             <!-- query selector -->
             <div class="col-md-4">
                 <label for="query-select" class="form-label">Choose a query:</label>
-                <select id="query-select" class="form-select" onchange="updateQueryParams('query', this.value)">
+                <select id="query-select" class="down-arrow" onchange="updateQueryParams('query', this.value)">
                     {% for query in query_options %}
                         <option value="{{ query }}" {% if query_file == query %}selected{% endif %}>{{ query }}</option>
                     {% endfor %}
@@ -31,7 +31,7 @@
             <!-- Style Selector -->
             <div class="col-md-4">
                 <label for="style-select" class="form-label">Choose a style:</label>
-                <select id="style-select" class="form-select" onchange="updateQueryParams('style', this.value)">
+                <select id="style-select" class="down-arrow" onchange="updateQueryParams('style', this.value)">
                     <option value="default-style" {% if table_style == "default-style" %}selected{% endif %}>Default</option>
                     <option value="striped" {% if table_style == "striped" %}selected{% endif %}>Striped</option>
                     <option value="bordered" {% if table_style == "bordered" %}selected{% endif %}>Bordered</option>
@@ -51,7 +51,7 @@
                         <!-- Special handling for race_id since we can make it nicer. -->
                         <div class="mb-3">
                             <label for="race-select" class="form-label">Choose a race:</label>
-                            <select id="race-select" class="form-select"
+                            <select id="race-select" class="down-arrow"
                                     onchange="updateQueryParams('{{ param }}', this.value)">
                                 {% for race in races %}
                                     <option value="{{ race['IDRace'] }}"
@@ -83,7 +83,7 @@
             {% for param, value in query_params.items() %}
                 <input type="hidden" name="{{ param }}" value="{{ value }}">
             {% endfor %}
-            <button type="submit" class="btn btn-primary">Download PDF</button>
+            <button type="submit" class="mv10">Download PDF</button>
         </form>
     </div>
 
