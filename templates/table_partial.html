@@ -16,11 +16,14 @@
                     <th>Actions</th>
                     {% for col in content.columns %}
                     <th>
-                        <a href="#" hx-get="{{ url_for('data.load_table', 
+                        <a href="#"
+                            hx-get="{{ url_for('data.load_table', 
                                 table=table, 
                                 sort=col,
                                 order='desc' if content.sort_by == col and content.order == 'asc' else 'asc',
-                                page=1) }}" hx-swap="outerHTML" hx-target="closest div">
+                                page=1) }}" 
+                            hx-swap="outerHTML" 
+                            hx-target="closest .table-container">
                             {{ col }}
                             {% if content.sort_by == col %}
                             {{ '▼' if content.order == 'desc' else '▲' }}
