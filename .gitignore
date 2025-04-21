@@ -237,3 +237,6 @@ fabric.properties
 # Everything in graphs folder
 graphs/
 tmp/
+
+# Milrose db to make life a bit easier
+db/2025Milrose.db

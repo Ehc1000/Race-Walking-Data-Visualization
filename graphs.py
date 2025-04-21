@@ -133,7 +133,6 @@ def generate_graph(race_id: int, athletes):
         "#17becf"  # Cyan
     ]
     # Fetch data for specified athlete IDs only
-    #print(athletes)
     loc_data = read_loc_data(race_id, athletes)
     judge_calls_data = read_judge_calls_data(race_id, athletes)
     bib_data = read_bib_data()
@@ -144,40 +143,50 @@ def generate_graph(race_id: int, athletes):
 
     judge_calls_data['TOD'] = judge_calls_data['TOD'].apply(convert_time, args=(race_date,))
 
-
     # Merge to get runner names
     merged_data = pd.merge(bib_data, name_data, on='ID')
+    
+    # Find the overall max time (for x-axis range calculation)
     max_time_all = loc_data['Time'].max()
     
-    # Add a point at max_time_all for each athlete if they don't have one
-    # Add a point at max_time_all for each athlete if they don't have one
+    # Add a point at max_time_all only for athletes with judge calls after their last data point
     for runner_id in athletes:
         runner_id = int(float(runner_id))
         runner_data = loc_data[loc_data['BibNumber'] == runner_id]
         if not runner_data.empty:
-            # Check if runner has a point at max_time_all
-            if not (runner_data['Time'] == max_time_all).any():
-                # Get the last point's value
-                last_point = runner_data.iloc[-1]
-                
-                # Create new row with same values as last point, but at max_time_all
-                new_row = {
-                    'ID': last_point['ID'],
-                    'IDRace': last_point['IDRace'],
-                    'BibNumber': runner_id,
-                    'LOC': last_point['LOC'],
-                    'KneeAngle': last_point['KneeAngle'],
-                    'Time': max_time_all
-                }
-                
-                # Add to loc_data
-                loc_data = pd.concat([loc_data, pd.DataFrame([new_row])], ignore_index=True)
+            # Get the athlete's last data point time
+            athlete_max_time = runner_data['Time'].max()
+            
+            # Check if this athlete has any judge calls after their last data point
+            athlete_calls = judge_calls_data[judge_calls_data['BibNumber'] == runner_id]
+            if not athlete_calls.empty:
+                last_infraction_time = athlete_calls['TOD'].max()
+                if last_infraction_time > athlete_max_time:
+                    # Get the last point's value
+                    last_point = runner_data.iloc[-1]
+                    
+                    # Create new row with same values as last point, but at last_infraction_time
+                    new_row = {
+                        'ID': last_point['ID'],
+                        'IDRace': last_point['IDRace'],
+                        'BibNumber': runner_id,
+                        'LOC': last_point['LOC'],
+                        'KneeAngle': last_point['KneeAngle'],
+                        'Time': last_infraction_time
+                    }
+                    
+                    # Add to loc_data
+                    loc_data = pd.concat([loc_data, pd.DataFrame([new_row])], ignore_index=True)
+                    
+                    # Update max_time_all if this athlete's extended time is the new maximum
+                    if last_infraction_time > max_time_all:
+                        max_time_all = last_infraction_time
 
     min_time = loc_data['Time'].min()
-    max_time = loc_data['Time'].max()
+    max_time = max_time_all  # Use the updated max_time_all
     time_range = max_time - min_time
     buffer_seconds_y = time_range.total_seconds() * 0.1  # 10% buffer to extend x-axis from the left
-    buffer_seconds_x = time_range.total_seconds() * 0.40  # 40% buffer to extend x-axis from the right to account for the athlete legend covering the data
+    buffer_seconds_x = time_range.total_seconds() * 0.40  # 40% buffer to extend x-axis from the right
     buffer_y = pd.Timedelta(seconds=buffer_seconds_y)
     buffer_x = pd.Timedelta(seconds=buffer_seconds_x)
     extended_min_time = min_time - buffer_y
@@ -192,6 +201,7 @@ def generate_graph(race_id: int, athletes):
         sizing_mode="scale_width",
         x_range=(extended_min_time, extended_max_time)
     )
+
 
     # Set the x-axis tick formatter to display military time (HH:MM)
     p.xaxis.formatter = DatetimeTickFormatter(hours="%H:%M", minutes="%H:%M")
@@ -263,61 +273,87 @@ def generate_graph(race_id: int, athletes):
         p.add_tools(hover)
 
         # Add judge call markers
-        color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
-        judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
-        added_judges = set()
-        # Iterate over the original judge_calls_data to populate the legend
-        for _, row in judge_calls_data.iterrows():
-            judge_id = row['IDJudge']
-            if judge_id not in added_judges:
-                judge_legend_dict[judge_id] = f'Judge #{judge_id}: {row["FirstName"]} {row["LastName"]}'
-                added_judges.add(judge_id)
+    color_mapping = {'Yellow': 'yellow', 'Red': 'red'}
+    judge_calls_source = ColumnDataSource(data=dict(x=[], y=[], text=[], color=[], shape=[], infraction=[]))
+    added_judges = set()
+    
+    # Iterate over the original judge_calls_data to populate the legend
+    for _, row in judge_calls_data.iterrows():
+        judge_id = row['IDJudge']
+        if judge_id not in added_judges:
+            judge_legend_dict[judge_id] = f'Judge #{judge_id}: {row["FirstName"]} {row["LastName"]}'
+            added_judges.add(judge_id)
 
-        # Group by BibNumber and TOD, and aggregate the judge calls
-        grouped_judge_calls = judge_calls_data.groupby(['BibNumber', 'TOD']).agg({
-            'IDJudge': lambda x: ', '.join(map(str, x)),
-            'Color': 'first',  # Assuming all entries in the group have the same color
-            'Infraction': lambda x: combine_infractions(x),
-            'FirstName': lambda x: ', '.join(x),
-            'LastName': lambda x: ', '.join(x)
-        }).reset_index()
-        # print(grouped_judge_calls)
-        for _, row in grouped_judge_calls[grouped_judge_calls['BibNumber'] == runner_id].iterrows():
-            nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']].iloc[-1:]
-            after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']].iloc[:1]
+    # Group by BibNumber and TOD, and aggregate the judge calls
+    grouped_judge_calls = judge_calls_data.groupby(['BibNumber', 'TOD']).agg({
+        'IDJudge': lambda x: ', '.join(map(str, x)),
+        'Color': 'first',
+        'Infraction': lambda x: combine_infractions(x),
+        'FirstName': lambda x: ', '.join(x),
+        'LastName': lambda x: ', '.join(x)
+    }).reset_index()
 
-            if not nearest_before.empty and not after_calls.empty:
-                nearest_before_time = nearest_before['Time'].iloc[0]
-                t2 = (after_calls['Time'].iloc[0] - nearest_before_time).total_seconds()
-                t3 = (pd.to_datetime(row['TOD']) - nearest_before_time).total_seconds()
-
-                loc1 = float(nearest_before['LOC'].iloc[0])
-                loc2 = float(after_calls['LOC'].iloc[0])
-
-                m = (loc2 - loc1) / t2
-                loc3 = (m * t3) + loc1
-
-                x_judge = pd.to_datetime(row['TOD'])
-                y_judge = loc3
-                color = color_mapping.get(row['Color'], 'red')
-                shape = 'square' if row['Color'] == 'Red' else 'circle'
-                
-                judge_calls_source.data['x'].append(x_judge)
-                judge_calls_source.data['y'].append(y_judge)
-                judge_calls_source.data['text'].append('    #' + str(row['IDJudge']))
-                judge_calls_source.data['color'].append(color)
-                judge_calls_source.data['shape'].append(shape)
-                judge_calls_source.data['infraction'].append(row['Infraction'])
-
-        # Plot the scatter points and text
-        p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
-        p.text(x='x', y='y', text='text', color='black', source=judge_calls_source, y_offset=10)
-        p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
-
-        # Create legend items
-        judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
-
+    for _, row in grouped_judge_calls.iterrows():
+        runner_id = row['BibNumber']
+        loc_data_runner = loc_data[loc_data['BibNumber'] == runner_id]
+        
+        if loc_data_runner.empty:
+            continue
             
+        # Find the nearest LOC data points around the infraction time
+        nearest_before = loc_data_runner[loc_data_runner['Time'] <= row['TOD']]
+        if not nearest_before.empty:
+            nearest_before = nearest_before.iloc[-1:]
+        after_calls = loc_data_runner[loc_data_runner['Time'] > row['TOD']]
+        if not after_calls.empty:
+            after_calls = after_calls.iloc[:1]
+
+        if not nearest_before.empty and not after_calls.empty:
+            # Calculate the interpolated LOC value at the infraction time
+            nearest_before_time = nearest_before['Time'].iloc[0]
+            t2 = (after_calls['Time'].iloc[0] - nearest_before_time).total_seconds()
+            t3 = (pd.to_datetime(row['TOD']) - nearest_before_time).total_seconds()
+
+            loc1 = float(nearest_before['LOC'].iloc[0])
+            loc2 = float(after_calls['LOC'].iloc[0])
+
+            m = (loc2 - loc1) / t2
+            loc3 = (m * t3) + loc1
+
+            x_judge = pd.to_datetime(row['TOD'])
+            y_judge = loc3
+            color = color_mapping.get(row['Color'], 'red')
+            shape = 'square' if row['Color'] == 'Red' else 'circle'
+            
+            judge_calls_source.data['x'].append(x_judge)
+            judge_calls_source.data['y'].append(y_judge)
+            judge_calls_source.data['text'].append('    #' + str(row['IDJudge']))
+            judge_calls_source.data['color'].append(color)
+            judge_calls_source.data['shape'].append(shape)
+            judge_calls_source.data['infraction'].append(row['Infraction'])
+        elif not nearest_before.empty:
+            # If infraction is after last data point but we've extended the line
+            x_judge = pd.to_datetime(row['TOD'])
+            y_judge = float(nearest_before['LOC'].iloc[0])  # Use last known LOC value
+            color = color_mapping.get(row['Color'], 'red')
+            shape = 'square' if row['Color'] == 'Red' else 'circle'
+            
+            judge_calls_source.data['x'].append(x_judge)
+            judge_calls_source.data['y'].append(y_judge)
+            judge_calls_source.data['text'].append('    #' + str(row['IDJudge']))
+            judge_calls_source.data['color'].append(color)
+            judge_calls_source.data['shape'].append(shape)
+            judge_calls_source.data['infraction'].append(row['Infraction'])
+
+    # Plot the scatter points and text
+    p.scatter(x='x', y='y', fill_color='color', source=judge_calls_source, size=20, marker='shape')
+    p.text(x='x', y='y', text='text', color='black', source=judge_calls_source, y_offset=10)
+    p.text(x='x', y='y', text='infraction', color='black', source=judge_calls_source, x_offset=-5, y_offset=9)
+
+    # Create legend items
+    judge_legend_items = [LegendItem(label=label) for _, label in judge_legend_dict.items()]
+
+        
     p.legend.location = "top_right"
     p.legend.click_policy = "mute"
     p.background_fill_color = "white"
