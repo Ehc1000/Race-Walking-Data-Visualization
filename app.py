@@ -4,8 +4,10 @@ from reports import reports_bp
 from tasks import tasks_bp
 from graphs import graphs_bp
 from webscraper import webscraper_bp
+from config import Config
 
 app = Flask(__name__)
+app.config.from_object(Config)
 
 blueprints = [
     (graphs_bp, "Data Graphs", "/graphs"),

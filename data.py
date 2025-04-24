@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, current_app
 import sqlite3 as sql
 
 data_bp = Blueprint("data", __name__)
@@ -6,7 +6,7 @@ data_bp = Blueprint("data", __name__)
 
 @data_bp.route("/")
 def data():
-    db_file = request.args.get("db", "db/RWComplete.db")
+    db_file = request.args.get("db", current_app.config["DATADATABASE_PATH"])
     with sql.connect(db_file) as conn:
         cursor = conn.cursor()
         cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
@@ -21,7 +21,7 @@ def data():
 
 @data_bp.route("/load_table/<table>")
 def load_table(table):
-    db_file = request.args.get("db", "db/RWComplete.db")
+    db_file = request.args.get("db", current_app.config["DATADATABASE_PATH"])
 
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 10, type=int)
@@ -109,7 +109,7 @@ def create_input_cell_html(request_path: str, new_value: str) -> str:
 
 @data_bp.route("/delete_row/<table>/<pk>", methods=["DELETE"])
 def delete_row(table, pk):
-    db_file = request.args.get("db", "db/RWComplete.db")
+    db_file = request.args.get("db", current_app.config["DATADATABASE_PATH"])
     try:
         with sql.connect(db_file) as conn:
             cursor = conn.cursor()

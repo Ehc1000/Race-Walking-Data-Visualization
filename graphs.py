@@ -1,4 +1,4 @@
-from flask import Blueprint, redirect, render_template, render_template_string, request
+from flask import Blueprint, redirect, render_template, render_template_string, request, current_app, g
 from bokeh.embed import server_document
 import sqlite3
 import pandas as pd
@@ -9,7 +9,13 @@ from bokeh.embed import components
 
 graphs_bp = Blueprint('graphs', __name__)
 # Database connection
-conn = sqlite3.connect('db/DrexelRaceWalking.db', check_same_thread=False)
+def get_conn():
+    if "db_conn" not in g:
+        g.db_conn = sqlite3.connect(
+            current_app.config["DATADATABASE_PATH"],
+            check_same_thread=False
+        )
+    return g.db_conn
 
 
 def read_loc_data(race_id, athlete_ids):
@@ -20,19 +26,19 @@ def read_loc_data(race_id, athlete_ids):
         WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
         ORDER BY TOD
     '''
-    data = pd.read_sql(query, conn)
+    data = pd.read_sql(query, get_conn())
     data.columns = ["ID", "IDRace", 'BibNumber', 'LOC', 'KneeAngle', 'Time']
     return data
 
 
 def read_bib_data():
-    data = pd.read_sql('SELECT "IDAthlete", "BibNumber" FROM Bib', conn)
+    data = pd.read_sql('SELECT "IDAthlete", "BibNumber" FROM Bib', get_conn())
     data.columns = ['ID', 'BibNumber']
     return data
 
 
 def read_id_data():
-    data = pd.read_sql('SELECT "IDAthlete", "FirstName", "LastName" FROM Athlete', conn)
+    data = pd.read_sql('SELECT "IDAthlete", "FirstName", "LastName" FROM Athlete', get_conn())
     data.columns = ['ID', 'FirstName', 'LastName']
     return data
 
@@ -52,7 +58,7 @@ def read_judge_calls_data(race_id, athlete_ids):
         WHERE BibNumber IN ({athlete_ids_str}) AND IDRace={race_id} 
         ORDER BY Color
     '''
-    data = pd.read_sql(query, conn)
+    data = pd.read_sql(query, get_conn())
     return data
 
 def get_available_athletes(race_id):
@@ -64,7 +70,7 @@ def get_available_athletes(race_id):
         WHERE VideoObservation.IDRace={race_id}
     '''
     # Fetch data from the database
-    data = pd.read_sql(query, conn)
+    data = pd.read_sql(query, get_conn())
 
     # Debug output to check the content of the DataFrame
     # print(f"Query Result for Race {race_id}: {data}")
@@ -289,7 +295,7 @@ def generate_graph(race_id: int, athletes):
 def graphs(race_id):
     # Fetch available races
     query = 'SELECT DISTINCT IDRace FROM Race'
-    race_data = pd.read_sql(query, conn)
+    race_data = pd.read_sql(query, get_conn())
     print(race_data)
     race_ids = race_data['IDRace'].tolist()  # List of available race IDs
     print(race_ids)
@@ -337,7 +343,7 @@ def generate_graph_route(race_id):
 def select_race():
     # Fetch available races
     query = 'SELECT DISTINCT IDRace FROM Race'
-    race_data = pd.read_sql(query, conn)
+    race_data = pd.read_sql(query, get_conn())
     race_ids = race_data['IDRace'].tolist()  # List of available race IDs
 
     # If form is submitted, redirect to the selected race ID
