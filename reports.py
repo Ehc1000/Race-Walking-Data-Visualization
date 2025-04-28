@@ -4,6 +4,7 @@ import platform
 import pdfkit
 from flask import Blueprint, render_template, request, send_file
 import common as cmn
+import json
 
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 ARCH = platform.machine().lower()
@@ -49,15 +50,17 @@ def generate_table():
     # in the http request query params
     needed_params = cmn.get_labeled_sql_parameters(query_file)
     query_params = {k: query_params.get(k, cmn.PARAMETER_DEFAULTS.get(k)) for k in needed_params}
+    pdf_available = True
     try:
         df = cmn.df_from_labeled_query(query_file, db_file, params=query_params)
         html_table = df.to_html(classes=table_style, index=False)
     except Exception as e:
+        pdf_available = False
         if db_file == "DrexelRaceWalking.db":
             html_table = "<p>The Drexel race walking database does not support this query.</p>"
         else:
             html_table = f"<p>Query failed for the following reason:</p><p>{str(e)}</p>"
-    return needed_params, html_table, db_file, query_file, table_style, query_params
+    return needed_params, html_table, db_file, query_file, table_style, query_params, pdf_available
 
 
 @reports_bp.route("/download_pdf")
@@ -66,13 +69,14 @@ def download_pdf():
         return "PDF generation is not available because pdfkit or wkhtmltopdf is not installed."
     # would technically be better if it didn't rerun the query and making the table when the user
     # hits the download button but who cares
-    needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
+    needed_params, html_table, db_file, query_file, table_style, query_params, pdf_available = generate_table()
     pdf_name = f"{db_file}_{query_file}_{table_style}.pdf"
     pdf_output_path = f"{cmn.TMP_FOLDER}{pdf_name}"
     os.makedirs(cmn.TMP_FOLDER, exist_ok=True)
     css_files = [
         "static/global.css"
     ]
+    print(html_table)
 
     pdfkit.from_string(html_table, pdf_output_path, css=css_files, configuration=CONFIG)
     return send_file(pdf_output_path, as_attachment=True, download_name=pdf_name)
@@ -80,7 +84,7 @@ def download_pdf():
 
 @reports_bp.route("/")
 def display_table():
-    needed_params, html_table, db_file, query_file, table_style, query_params = generate_table()
+    needed_params, html_table, db_file, query_file, table_style, query_params, pdf_available = generate_table()
     query_options = cmn.get_all_labeled_queries()
     db_options = cmn.get_dbs()
     races = cmn.df_from_labeled_query("AllRaces.sql", "RWComplete.db").to_dict(orient="records")
@@ -88,6 +92,13 @@ def display_table():
     query_params = {k: str(v) for k, v in query_params.items() if v is not None}
     for race in races:
         race['IDRace'] = str(race['IDRace'])
+
+    # i do this in such a stupid way but whatever for now it works
+    with open('reports/reports.json', 'r', encoding='utf-8') as f:
+        report_names = json.load(f)
+
+    with open('db/dbs.json', 'r', encoding='utf-8') as f:
+        db_names = json.load(f)
 
     return render_template(
         "reports.html",
@@ -99,7 +110,10 @@ def display_table():
         query_options=query_options,
         needed_parameters=needed_params,
         query_params=query_params,
-        races=races
+        races=races,
+        report_names=report_names,
+        db_names=db_names,
+        pdf_available=pdf_available
     )
 
 
